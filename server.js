@@ -7,62 +7,89 @@ app.use(express.json());
 const BOT_TOKEN = process.env.BOT_TOKEN;
 const FIREBASE_DB_URL = "https://gardenfoodsam-default-rtdb.firebaseio.com";
 
-// Bekor qilish izohini kutish xotirasi (Chat ID bo'yicha)
+// Bekor qilish izohini kutish xotirasi
 const pendingCancellations = {};
 
 app.post("/telegram-webhook", async (req, res) => {
   try {
     const update = req.body;
-    console.log("Webhook keldi:", JSON.stringify(update));
 
-    // 1. INLINE TUGMA BOSILGANDA
+    // 1. INLINE TUGMALAR BOSILGANDA
     if (update.callback_query) {
       const callback = update.callback_query;
       const callbackData = callback.data || "";
       const chatId = callback.message.chat.id;
       const messageId = callback.message.message_id;
 
-      // "orderId:action" yoki "accept_orderId" formatlarini ajratish
       let orderId = "";
       let action = "";
 
       if (callbackData.includes(":")) {
         [orderId, action] = callbackData.split(":");
-      } else if (callbackData.startsWith("accept_")) {
-        orderId = callbackData.replace("accept_", "");
-        action = "accept";
-      } else if (callbackData.startsWith("cancel_")) {
-        orderId = callbackData.replace("cancel_", "");
-        action = "cancel";
       }
 
-      console.log(`Tugma bosildi. Action: ${action}, OrderId: ${orderId}`);
-
-      // A) QABUL QILINDI
+      // A) QABUL QILINDI (TAYYORLANMOQDA)
       if (action === "accept") {
-        try {
-          await axios.patch(`${FIREBASE_DB_URL}/orders/${orderId}.json`, {
-            status: "✅ Qabul qilindi",
-            updatedAt: Date.now()
-          });
-        } catch (e) {
-          console.error("Firebase update error:", e.message);
-        }
+        await axios.patch(`${FIREBASE_DB_URL}/orders/${orderId}.json`, {
+          status: "👨‍🍳 Buyurtma qabul qilindi va tayyorlanmoqda",
+          updatedAt: Date.now()
+        });
 
         await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/editMessageText`, {
           chat_id: chatId,
           message_id: messageId,
-          text: callback.message.text + "\n\n✅ <b>BUYURTMA QABUL QILINDI!</b>",
-          parse_mode: "HTML"
-        });
-
-        await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/answerCallbackQuery`, {
-          callback_query_id: callback.id,
-          text: `Buyurtma #${orderId} qabul qilindi!`
+          text: callback.message.text + "\n\n<b>Status:</b> 👨‍🍳 Tayyorlanmoqda...",
+          parse_mode: "HTML",
+          reply_markup: {
+            inline_keyboard: [
+              [
+                { text: "🚗 Yo'lga chiqdi", callback_data: `${orderId}:delivering` },
+                { text: "✅ Yetkazildi", callback_data: `${orderId}:completed` }
+              ],
+              [
+                { text: "❌ Bekor qilish", callback_data: `${orderId}:cancel` }
+              ]
+            ]
+          }
         });
       } 
 
-      // B) BEKOR QILISH
+      // B) YO'LGA CHIQDI
+      else if (action === "delivering") {
+        await axios.patch(`${FIREBASE_DB_URL}/orders/${orderId}.json`, {
+          status: "🚗 Kuryer yo'lda, tez orada yetib boradi",
+          updatedAt: Date.now()
+        });
+
+        await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/editMessageText`, {
+          chat_id: chatId,
+          message_id: messageId,
+          text: callback.message.text.split("\n\n<b>Status:</b>")[0] + "\n\n<b>Status:</b> 🚗 Yo'lda...",
+          parse_mode: "HTML",
+          reply_markup: {
+            inline_keyboard: [
+              [{ text: "✅ Yetkazildi", callback_data: `${orderId}:completed` }]
+            ]
+          }
+        });
+      }
+
+      // C) YETKAZILDI (MUKAMMAL YAKUNLANDI)
+      else if (action === "completed") {
+        await axios.patch(`${FIREBASE_DB_URL}/orders/${orderId}.json`, {
+          status: "🎉 Buyurtma muvaffaqiyatli yetkazib berildi!",
+          updatedAt: Date.now()
+        });
+
+        await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/editMessageText`, {
+          chat_id: chatId,
+          message_id: messageId,
+          text: callback.message.text.split("\n\n<b>Status:</b>")[0] + "\n\n✅ <b>BUYURTMA YETKAZIB BERILDI!</b>",
+          parse_mode: "HTML"
+        });
+      }
+
+      // D) BEKOR QILISH
       else if (action === "cancel") {
         const promptRes = await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
           chat_id: chatId,
@@ -75,14 +102,14 @@ app.post("/telegram-webhook", async (req, res) => {
           originalMessageId: messageId,
           promptMessageId: promptRes.data.result.message_id
         };
-
-        await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/answerCallbackQuery`, {
-          callback_query_id: callback.id
-        });
       }
+
+      await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/answerCallbackQuery`, {
+        callback_query_id: callback.id
+      });
     }
 
-    // 2. ADMIN SABABINI REPLIK QILIB YOZIB YUBORGANDA
+    // 2. ADMIN BEKOR QILISH SABABINI REPLY QILIB YOZGANIDA
     if (update.message && update.message.reply_to_message) {
       const chatId = update.message.chat.id;
       const pending = pendingCancellations[chatId];
@@ -90,23 +117,16 @@ app.post("/telegram-webhook", async (req, res) => {
       if (pending && update.message.reply_to_message.message_id === pending.promptMessageId) {
         const reason = update.message.text;
 
-        try {
-          await axios.patch(`${FIREBASE_DB_URL}/orders/${pending.orderId}.json`, {
-            status: `❌ Bekor qilindi. Sababi: ${reason}`,
-            cancelReason: reason,
-            updatedAt: Date.now()
-          });
-        } catch (e) {
-          console.error("Firebase update error:", e.message);
-        }
-
-        const originalText = update.message.reply_to_message.text || "";
-        const cleanText = originalText.replace(/^❌ Buyurtma #.*$/m, "").trim();
+        await axios.patch(`${FIREBASE_DB_URL}/orders/${pending.orderId}.json`, {
+          status: `❌ Bekor qilindi. Sababi: ${reason}`,
+          cancelReason: reason,
+          updatedAt: Date.now()
+        });
 
         await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/editMessageText`, {
           chat_id: chatId,
           message_id: pending.originalMessageId,
-          text: `${cleanText}\n\n❌ <b>BUYURTMA BEKOR QILINDI!</b>\n<b>Sababi:</b> ${reason}`,
+          text: update.message.reply_to_message.text.split('\n\n')[0] + `\n\n❌ <b>BUYURTMA BEKOR QILINDI!</b>\n<b>Sababi:</b> ${reason}`,
           parse_mode: "HTML"
         });
 
@@ -120,17 +140,13 @@ app.post("/telegram-webhook", async (req, res) => {
     }
 
   } catch (err) {
-    console.error("Webhook xatolik:", err.response ? err.response.data : err.message);
+    console.error("Webhook Error:", err.message);
   }
 
   res.sendStatus(200);
 });
 
-app.get("/", (req, res) => {
-  res.send("Garden Food Backend Server Ishlamoqda!");
-});
+app.get("/", (req, res) => res.send("Garden Food Backend Server Ishlamoqda!"));
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server ${PORT}-portda ishga tushdi`);
-});
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
