@@ -4,7 +4,7 @@ const app = express();
 
 app.use(express.json());
 
-const BOT_TOKEN = "8825538602:AAFk6F_yRQsQFJvNieamEZxiG44qB0PzB3k";
+const BOT_TOKEN = process.env.BOT_TOKEN;
 const FIREBASE_DB_URL = "https://gardenfoodsam-default-rtdb.firebaseio.com";
 
 app.post("/telegram-webhook", async (req, res) => {
