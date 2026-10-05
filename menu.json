@@ -1,0 +1,162 @@
+[
+ {
+  "name": "Lavash STANDART",
+  "price": 30000
+ },
+ {
+  "name": "Lavash qalampir",
+  "price": 32000
+ },
+ {
+  "name": "Lavash сырный",
+  "price": 32000
+ },
+ {
+  "name": "Lavash куриный",
+  "price": 30000
+ },
+ {
+  "name": "Lavash EXTRA",
+  "price": 36000
+ },
+ {
+  "name": "Pita",
+  "price": 32000
+ },
+ {
+  "name": "Pita куриная",
+  "price": 30000
+ },
+ {
+  "name": "Gamburger",
+  "price": 28000
+ },
+ {
+  "name": "Cheeseburger",
+  "price": 30000
+ },
+ {
+  "name": "Bigburger",
+  "price": 38000
+ },
+ {
+  "name": "BigDoubleCheese",
+  "price": 40000
+ },
+ {
+  "name": "Куриный Burger",
+  "price": 26000
+ },
+ {
+  "name": "Chicken Burger",
+  "price": 28000
+ },
+ {
+  "name": "Burger фирменный",
+  "price": 38000
+ },
+ {
+  "name": "Haggi",
+  "price": 25000
+ },
+ {
+  "name": "Baget",
+  "price": 32000
+ },
+ {
+  "name": "Sandwich",
+  "price": 35000
+ },
+ {
+  "name": "Tuxum+Kolbasa",
+  "price": 32000
+ },
+ {
+  "name": "Donar",
+  "price": 45000
+ },
+ {
+  "name": "Куриный Mix",
+  "price": 33000
+ },
+ {
+  "name": "NonKabob",
+  "price": 32000
+ },
+ {
+  "name": "Shaurma",
+  "price": 32000
+ },
+ {
+  "name": "Shashlik nonga",
+  "price": 32000
+ },
+ {
+  "name": "Мясной Mix",
+  "price": 35000
+ },
+ {
+  "name": "Kolbasali HotDog",
+  "price": 15000
+ },
+ {
+  "name": "Kolbasali HotDog 2X",
+  "price": 18000
+ },
+ {
+  "name": "HotDog лепешка",
+  "price": 16000
+ },
+ {
+  "name": "Classic HotDog 2X",
+  "price": 15000
+ },
+ {
+  "name": "Королевский HotDog 3X",
+  "price": 20000
+ },
+ {
+  "name": "Королевский HotDog 4X",
+  "price": 22000
+ },
+ {
+  "name": "Qazili HotDog Mini",
+  "price": 25000
+ },
+ {
+  "name": "Qazili HotDog Big",
+  "price": 32000
+ },
+ {
+  "name": "Фирменный HotDog Mini",
+  "price": 26000
+ },
+ {
+  "name": "Фирменный HotDog Big",
+  "price": 35000
+ },
+ {
+  "name": "Шашлычный HotDog Mini",
+  "price": 24000
+ },
+ {
+  "name": "Шашлычный HotDog Big",
+  "price": 32000
+ },
+ {
+  "name": "Kartoshka fri",
+  "price": 16000
+ },
+ {
+  "name": "Kartoshkа по деревенские",
+  "price": 20000
+ },
+ {
+  "name": "Куриные шарики 12 ta",
+  "price": 18000
+ },
+ {
+  "name": "Nuggets 250gramm",
+  "price": 30000
+ }
+]
