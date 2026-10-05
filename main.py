@@ -18,21 +18,18 @@ app.add_middleware(
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 CHAT_ID = "8757414683"
-
-# Firebase Realtime Database URL (O'zingizning Firebase URL manzilingiz bilan almashtirishingiz mumkin)
 FIREBASE_URL = os.getenv(
     "FIREBASE_URL", "https://gardenfood-default-rtdb.firebaseio.com"
 )
 
-# --- VAQTINCHALIK XOTIRA (OTP uchun) ---
+# Vaqtinchalik OTP xotirasi (RAM)
 otp_store = {}
 
 
-# --- MODEL SHABLONLARI ---
 class OrderData(BaseModel):
   orderId: str
   text: str
-  phone: Optional[str] = "Noma'lum"
+  phone: str
 
 
 class OTPRequest(BaseModel):
@@ -46,36 +43,38 @@ class OTPVerify(BaseModel):
 
 def send_telegram_request(method: str, payload: dict):
   url = f"https://api.telegram.org/bot{BOT_TOKEN}/{method}"
-  return requests.post(url, json=payload).json()
+  try:
+    res = requests.post(url, json=payload, timeout=10)
+    return res.json()
+  except Exception as e:
+    print(f"Telegram API Error: {e}")
+    return {}
 
 
-# --- FIREBASE YORDAMCHI FUNKSIYALARI ---
-def firebase_set(path: str, data: dict):
-  """Firebase'ga ma'lumot yozish yoki yangilash"""
+def firebase_patch(path: str, data: dict):
   try:
     url = f"{FIREBASE_URL}/{path}.json"
-    requests.patch(url, json=data)
+    requests.patch(url, json=data, timeout=10)
   except Exception as e:
-    print(f"Firebase error: {e}")
+    print(f"Firebase Patch Error: {e}")
 
 
 def firebase_get(path: str):
-  """Firebase'dan ma'lumot o'qish"""
   try:
     url = f"{FIREBASE_URL}/{path}.json"
-    res = requests.get(url)
+    res = requests.get(url, timeout=10)
     return res.json() or {}
   except Exception as e:
-    print(f"Firebase error: {e}")
+    print(f"Firebase Get Error: {e}")
     return {}
 
 
 @app.get("/")
 def home():
-  return {"status": "Garden Food Backend (Firebase Enabled) ishlayapti!"}
+  return {"status": "Garden Food Backend API Active!"}
 
 
-# --- AUTENTIFIKATSIYA ENDPOINTLARI (OTP) ---
+# --- 1. TELEFONNI TASDIQLASH (OTP) ---
 
 
 @app.post("/api/auth/send-otp")
@@ -104,18 +103,17 @@ async def send_otp(data: OTPRequest):
 @app.post("/api/auth/verify-otp")
 async def verify_otp(data: OTPVerify):
   saved_code = otp_store.get(data.phone)
-  if saved_code and saved_code == data.code:
+  if saved_code and str(saved_code) == str(data.code):
     del otp_store[data.phone]
     return {
         "status": "ok",
         "authenticated": True,
         "phone": data.phone,
-        "token": f"token_{data.phone}",
     }
   return {"status": "error", "message": "Tasdiqlash kodi noto'g'ri!"}
 
 
-# --- BUYURTMA BERISH VA TARIX ---
+# --- 2. BUYURTMA YARATISH VA STATUSLARNI OLISH ---
 
 
 @app.post("/api/order")
@@ -123,17 +121,17 @@ async def send_order(data: OrderData):
   order_info = {
       "orderId": data.orderId,
       "phone": data.phone,
-      "status": "Yangi buyurtma",
+      "status": "📥 Yangi buyurtma",
       "text": data.text,
   }
 
-  # Firebase Realtime Database'ga saqlash
-  firebase_set(f"orders/{data.orderId}", order_info)
+  # Firebase'ga to'liq saqlash
+  firebase_patch(f"orders/{data.orderId}", order_info)
 
   payload = {
       "chat_id": CHAT_ID,
       "text": (
-          f"{data.text}\n\n📱 <b>Tel:</b> {data.phone}\n📌 <b>Holati:</b>"
+          f"{data.text}\n\n📱 <b>Tel:</b> {data.phone}\n📌 <b>Holati:</b> 📥"
           " Yangi buyurtma"
       ),
       "parse_mode": "HTML",
@@ -156,16 +154,13 @@ async def send_order(data: OrderData):
 
 @app.get("/api/orders/{phone}")
 async def get_user_orders(phone: str):
-  # Firebase'dan barcha buyurtmalarni olish
   all_orders = firebase_get("orders")
 
   user_orders = []
   if isinstance(all_orders, dict):
-    user_orders = [
-        order
-        for order in all_orders.values()
-        if isinstance(order, dict) and order.get("phone") == phone
-    ]
+    for o_id, order in all_orders.items():
+      if isinstance(order, dict) and str(order.get("phone")) == str(phone):
+        user_orders.append(order)
 
   active_orders = [
       o
@@ -185,7 +180,7 @@ async def get_user_orders(phone: str):
   }
 
 
-# --- TELEGRAM WEBHOOK (STATUSLARNI REAL-TIME YANGILASH) ---
+# --- 3. TELEGRAM BOT WEBHOOK (HOLAT O'ZGARGANDA FIREBASE YANGILANADI) ---
 
 
 @app.post("/api/telegram-webhook")
@@ -205,10 +200,10 @@ async def telegram_webhook(request: Request):
         "answerCallbackQuery", {"callback_query_id": callback_id}
     )
 
-    # 1. QABUL QILISH -> TAYYORLANMOQDA
+    # 1. QABUL QILISH
     if callback_data.startswith("accept:"):
       order_id = callback_data.split(":")[1]
-      firebase_set(f"orders/{order_id}", {"status": "✅ Qabul qilindi"})
+      firebase_patch(f"orders/{order_id}", {"status": "✅ Qabul qilindi"})
 
       base_text = current_text.split("\n\n📌")[0]
       new_text = f"{base_text}\n\n📌 <b>Holati:</b> ✅ Qabul qilindi"
@@ -233,10 +228,10 @@ async def telegram_webhook(request: Request):
       }
       send_telegram_request("editMessageText", payload)
 
-    # 2. TAYYORLANMOQDA -> YO'LGA CHIQDI
+    # 2. TAYYORLANMOQDA
     elif callback_data.startswith("cooking:"):
       order_id = callback_data.split(":")[1]
-      firebase_set(f"orders/{order_id}", {"status": "👨‍🍳 Tayyorlanmoqda"})
+      firebase_patch(f"orders/{order_id}", {"status": "👨‍🍳 Tayyorlanmoqda"})
 
       base_text = current_text.split("\n\n📌")[0]
       new_text = f"{base_text}\n\n📌 <b>Holati:</b> 👨‍🍳 Tayyorlanmoqda"
@@ -255,10 +250,32 @@ async def telegram_webhook(request: Request):
       }
       send_telegram_request("editMessageText", payload)
 
-    # 3. YO'LGA CHIQDI -> YETKAZILDI
+    # 3. YO'LGA CHIQDI
     elif callback_data.startswith("on_way:"):
       order_id = callback_data.split(":")[1]
-      firebase_set(f"orders/{order_id}", {"status": "🎉 Yetkazib berildi"})
+      firebase_patch(f"orders/{order_id}", {"status": "🚚 Yo'lga chiqdi"})
+
+      base_text = current_text.split("\n\n📌")[0]
+      new_text = f"{base_text}\n\n📌 <b>Holati:</b> 🚚 Yo'lga chiqdi"
+
+      payload = {
+          "chat_id": chat_id,
+          "message_id": message_id,
+          "text": new_text,
+          "parse_mode": "HTML",
+          "reply_markup": {
+              "inline_keyboard": [[{
+                  "text": "🎉 Yetkazildi",
+                  "callback_data": f"delivered:{order_id}",
+              }]]
+          },
+      }
+      send_telegram_request("editMessageText", payload)
+
+    # 4. YETKAZILDI
+    elif callback_data.startswith("delivered:"):
+      order_id = callback_data.split(":")[1]
+      firebase_patch(f"orders/{order_id}", {"status": "🎉 Yetkazib berildi"})
 
       base_text = current_text.split("\n\n📌")[0]
       new_text = f"{base_text}\n\n📌 <b>Holati:</b> 🎉 Yetkazib berildi"
@@ -272,7 +289,7 @@ async def telegram_webhook(request: Request):
       }
       send_telegram_request("editMessageText", payload)
 
-    # 4. BEKOR QILISH MENYUSI
+    # 5. BEKOR QILISH MENYUSI
     elif callback_data.startswith("cancel_menu:"):
       order_id = callback_data.split(":")[1]
       payload = {
@@ -309,10 +326,10 @@ async def telegram_webhook(request: Request):
       }
       send_telegram_request("editMessageText", payload)
 
-    # 5. BEKOR QILISH SABABI BILAN YAKUNLASH
+    # 6. BEKOR QILISH YAKUNI
     elif callback_data.startswith("cancel_reason:"):
       _, order_id, reason = callback_data.split(":", 2)
-      firebase_set(
+      firebase_patch(
           f"orders/{order_id}",
           {"status": "❌ Bekor qilindi", "cancel_reason": reason},
       )
