@@ -38,105 +38,105 @@ const EXPIRE_MS = 30 * 60 * 1000;
 // ---------- Tillar ----------
 const LANGS = ['uz', 'ru', 'en', 'hi'];
 const lg = (x) => (LANGS.includes(x) ? x : 'uz');
-const fromTg = (code) => lg(String(code || '').slice(0, 2));
 const SL = {
   uz: STATUS,
   ru: { unconfirmed: '⏳ Подтвердите в Telegram', pending: '📝 Заказ принят', confirmed: '✅ Подтверждён', preparing: '👨‍🍳 Готовится', delivering: '🚚 В пути', done: '📁 Доставлен', cancelled: '❌ Отменён' },
   en: { unconfirmed: '⏳ Confirm in Telegram', pending: '📝 Order received', confirmed: '✅ Confirmed', preparing: '👨‍🍳 Preparing', delivering: '🚚 On the way', done: '🎉 Delivered', cancelled: '❌ Cancelled' },
   hi: { unconfirmed: '⏳ Telegram में पुष्टि करें', pending: '📝 ऑर्डर प्राप्त हुआ', confirmed: '✅ पुष्टि हो गई', preparing: '👨‍🍳 तैयार हो रहा है', delivering: '🚚 रास्ते में', done: '🎉 डिलीवर हो गया', cancelled: '❌ रद्द किया गया' },
 };
+
 const B = {
   uz: {
-    share: '📱 Raqamni ulashish', askPhone: (id) => `Buyurtma #${id} ni tasdiqlash uchun telefon raqamingizni ulashing 👇`,
-    askPhoneBot: '📱 Garden Food restoranidan buyurtma berish uchun telefon raqamingizni ulashing 👇',
-    hello: 'Salom! Saytdan buyurtma bering yoki bot orqali to\'g\'ridan-to\'g\'ri taom tanlang.',
-    notFound: '❌ Buyurtma topilmadi. Saytdan qaytadan buyurtma bering.', already: (id) => `ℹ️ Buyurtma #${id} allaqachon tasdiqlangan.`,
-    expired: '⌛ Buyurtma muddati tugagan. Saytdan qaytadan buyurtma bering.', ownNum: "Iltimos, faqat o'zingizning raqamingizni ulashing.",
-    saved: 'Raqamingiz saqlandi.',
-    confirmed: (id, pay) => `✅ <b>Buyurtma #${id} tasdiqlandi!</b>\n\n${pay}\n\nHolat saytda va shu yerda yangilanib turadi.`,
-    cash: "💵 Naqd: kuryer yetib kelganda to'laysiz.",
-    card: (n, o, r) => `💳 Karta orqali to'lov${n ? `:\n<code>${n}</code>${o ? ` (${o})` : ''}` : ''}\nTo'lovdan so'ng chekni ${r || 'bizga'} ga Telegram orqali yuboring.`,
-    status: (id, s) => `🧾 Buyurtma #${id}: ${s}`, rate: 'Xizmatimiz yoqdimi? Baholang 👇',
-    thanksRate: (n) => `Rahmat! Siz ${n}⭐ baho berdingiz.\nXohlasangiz, izohingizni shu yerga yozing 💬`,
-    already2: 'Siz allaqachon baho bergansiz', thanks: 'Rahmat!', commentOk: '🙏 Izohingiz qabul qilindi, rahmat!',
-    askLocation: '📍 Endi yetkazib berish manzilini aniqlash uchun geolokatsiyangizni yuboring 👇',
+    chooseLang: '🇺🇿 Iltimos, tilni tanlang:\n🇷🇺 Пожалуйста, выберите язык:\n🇬🇳 Please choose a language:\n🇮🇳 कृपया भाषा चुनें:',
+    share: '📱 Raqamni ulashish',
+    askPhone: '📱 Telefon raqamingizni ulashing 👇',
+    ownNum: "Iltimos, faqat o'zingizning raqamingizni ulashing.",
+    askLocation: '📍 Yetkazib berish manzilini aniqlash uchun geolokatsiyangizni yuboring 👇',
     shareLoc: '📍 Geolokatsiyani yuborish',
-    menuTitle: '🍔 Menyudan taomlarni tanlang:',
+    categoriesTitle: '📂 Kategoriyani tanlang:',
     emptyCart: '⚠️ Savatchangiz bo\'sh!',
     cartHeader: '🛒 <b>Sizning savatchangiz:</b>\n\n',
+    askNote: '✍️ Buyurtma uchun umumiy izoh yozing (masalan: Uy raqami, orientir):',
+    skipNote: '⏭ Izohsiz davom etish',
     paymentChoice: '\n💰 <b>Jami:</b> {total} so\'m\n\nTo\'lov turini tanlang:',
     payCash: '💵 Naqd pul',
     payCard: '💳 Karta orqali',
-    orderDoneBot: (id, pay) => `🎉 <b>Buyurtmangiz muvaffaqiyatli qabul qilindi!</b>\n\n🧾 Buyurtma ID: #${id}\n${pay}\n\nTez orada xodimlarimiz siz bilan bog'lanishadi.`
+    orderDoneBot: (id, pay) => `🎉 <b>Buyurtmangiz muvaffaqiyatli qabul qilindi!</b>\n\n🧾 Buyurtma ID: #${id}\n${pay}\n\nTez orada xodimlarimiz siz bilan bog'lanishadi.`,
+    cash: "💵 Naqd: kuryer yetib kelganda to'laysiz.",
+    card: (n, o, r) => `💳 Karta orqali to'lov${n ? `:\n<code>${n}</code>${o ? ` (${o})` : ''}` : ''}\nTo'lovdan so'ng chekni ${r || 'bizga'} ga Telegram orqali yuboring.`,
+    status: (id, s) => `🧾 Buyurtma #${id}: ${s}`, 
+    rate: 'Xizmatimiz yoqdimi? Baholang 👇',
+    thanksRate: (n) => `Rahmat! Siz ${n}⭐ baho berdingiz.\nXohlasangiz, izohingizni shu yerga yozing 💬`,
+    already2: 'Siz allaqachon baho bergansiz', thanks: 'Rahmat!', commentOk: '🙏 Izohingiz qabul qilindi, rahmat!',
   },
   ru: {
-    share: '📱 Поделиться номером', askPhone: (id) => `Чтобы подтвердить заказ #${id}, поделитесь номером телефона 👇`,
-    askPhoneBot: '📱 Чтобы сделать заказ в Garden Food, поделитесь номером телефона 👇',
-    hello: 'Здравствуйте! Оформите заказ на сайте или выберите блюда напрямую в боте.',
-    notFound: '❌ Заказ не найден. Оформите заказ на сайте заново.', already: (id) => `ℹ️ Заказ #${id} уже подтверждён.`,
-    expired: '⌛ Срок подтверждения заказа истёк. Оформите заказ на сайте заново.', ownNum: 'Пожалуйста, поделитесь только своим номером.',
-    saved: 'Ваш номер сохранён.',
-    confirmed: (id, pay) => `✅ <b>Заказ #${id} подтверждён!</b>\n\n${pay}\n\nСтатус обновляется на сайте и здесь.`,
-    cash: '💵 Наличными: оплата курьеру при получении.',
-    card: (n, o, r) => `💳 Оплата картой${n ? `:\n<code>${n}</code>${o ? ` (${o})` : ''}` : ''}\nПосле перевода отправьте чек ${r || 'нам'} в Telegram.`,
-    status: (id, s) => `🧾 Заказ #${id}: ${s}`, rate: 'Понравилось обслуживание? Оцените 👇',
-    thanksRate: (n) => `Спасибо! Вы поставили ${n}⭐.\nЕсли хотите, напишите отзыв сюда 💬`,
-    already2: 'Вы уже оценили заказ', thanks: 'Спасибо!', commentOk: '🙏 Ваш отзыв принят, спасибо!',
-    askLocation: '📍 Теперь отправьте вашу геолокацию для определения адреса доставки 👇',
+    chooseLang: '🇷🇺 Пожалуйста, выберите язык:',
+    share: '📱 Поделиться номером',
+    askPhone: '📱 Поделитесь номером телефона 👇',
+    ownNum: 'Пожалуйста, поделитесь только своим номером.',
+    askLocation: '📍 Отправьте вашу геолокацию для определения адреса доставки 👇',
     shareLoc: '📍 Отправить геолокацию',
-    menuTitle: '🍔 Выберите блюда из меню:',
+    categoriesTitle: '📂 Выберите категорию:',
     emptyCart: '⚠️ Ваша корзина пуста!',
     cartHeader: '🛒 <b>Ваша корзина:</b>\n\n',
+    askNote: '✍️ Напишите общий комментарий к заказу (например, номер дома, ориентир):',
+    skipNote: '⏭ Продолжить без комментария',
     paymentChoice: '\n💰 <b>Итого:</b> {total} сум\n\nВыберите способ оплаты:',
     payCash: '💵 Наличные',
     payCard: '💳 Картой',
-    orderDoneBot: (id, pay) => `🎉 <b>Ваш заказ успешно принят!</b>\n\n🧾 ID заказа: #${id}\n${pay}\n\nСкоро с вами свяжутся наши сотрудники.`
+    orderDoneBot: (id, pay) => `🎉 <b>Ваш заказ успешно принят!</b>\n\n🧾 ID заказа: #${id}\n${pay}\n\nСкоро с вами свяжутся наши сотрудники.`,
+    cash: '💵 Наличными: оплата курьеру при получении.',
+    card: (n, o, r) => `💳 Оплата картой${n ? `:\n<code>${n}</code>${o ? ` (${o})` : ''}` : ''}\nПосле перевода отправьте чек ${r || 'нам'} в Telegram.`,
+    status: (id, s) => `🧾 Заказ #${id}: ${s}`, 
+    rate: 'Понравилось обслуживание? Оцените 👇',
+    thanksRate: (n) => `Спасибо! Вы поставили ${n}⭐.\nЕсли хотите, напишите отзыв сюда 💬`,
+    already2: 'Вы уже оценили заказ', thanks: 'Спасибо!', commentOk: '🙏 Ваш отзыв принят, спасибо!',
   },
   en: {
-    share: '📱 Share my number', askPhone: (id) => `To confirm order #${id}, please share your phone number 👇`,
-    askPhoneBot: '📱 To place an order at Garden Food, please share your phone number 👇',
-    hello: 'Hello! Place an order on the website or select dishes directly in the bot.',
-    notFound: '❌ Order not found. Please place the order on the website again.', already: (id) => `ℹ️ Order #${id} is already confirmed.`,
-    expired: '⌛ The confirmation window has expired. Please place the order again.', ownNum: 'Please share only your own number.',
-    saved: 'Your number is saved.',
-    confirmed: (id, pay) => `✅ <b>Order #${id} confirmed!</b>\n\n${pay}\n\nThe status is updated here and on the website.`,
-    cash: '💵 Cash: pay the courier on delivery.',
-    card: (n, o, r) => `💳 Card payment${n ? `:\n<code>${n}</code>${o ? ` (${o})` : ''}` : ''}\nAfter the transfer, please send the receipt to ${r || 'us'} on Telegram.`,
-    status: (id, s) => `🧾 Order #${id}: ${s}`, rate: 'Did you like our service? Rate us 👇',
-    thanksRate: (n) => `Thank you! You gave ${n}⭐.\nIf you like, write your comment here 💬`,
-    already2: 'You have already rated this order', thanks: 'Thank you!', commentOk: '🙏 Your comment was received, thank you!',
-    askLocation: '📍 Now please share your location to determine the delivery address 👇',
+    chooseLang: '🇬🇧 Please choose a language:',
+    share: '📱 Share my number',
+    askPhone: '📱 Please share your phone number 👇',
+    ownNum: 'Please share only your own number.',
+    askLocation: '📍 Please share your location to determine the delivery address 👇',
     shareLoc: '📍 Share location',
-    menuTitle: '🍔 Choose dishes from the menu:',
+    categoriesTitle: '📂 Choose a category:',
     emptyCart: '⚠️ Your cart is empty!',
     cartHeader: '🛒 <b>Your cart:</b>\n\n',
+    askNote: '✍️ Write a general comment for the order (e.g., apartment number, landmark):',
+    skipNote: '⏭ Skip comment',
     paymentChoice: '\n💰 <b>Total:</b> {total} UZS\n\nChoose payment method:',
     payCash: '💵 Cash',
     payCard: '💳 Card',
-    orderDoneBot: (id, pay) => `🎉 <b>Your order has been successfully accepted!</b>\n\n🧾 Order ID: #${id}\n${pay}\n\nOur staff will contact you shortly.`
+    orderDoneBot: (id, pay) => `🎉 <b>Your order has been successfully accepted!</b>\n\n🧾 Order ID: #${id}\n${pay}\n\nOur staff will contact you shortly.`,
+    cash: '💵 Cash: pay the courier on delivery.',
+    card: (n, o, r) => `💳 Card payment${n ? `:\n<code>${n}</code>${o ? ` (${o})` : ''}` : ''}\nAfter the transfer, please send the receipt to ${r || 'us'} on Telegram.`,
+    status: (id, s) => `🧾 Order #${id}: ${s}`, 
+    rate: 'Did you like our service? Rate us 👇',
+    thanksRate: (n) => `Thank you! You gave ${n}⭐.\nIf you like, write your comment here 💬`,
+    already2: 'You have already rated this order', thanks: 'Thank you!', commentOk: '🙏 Your comment was received, thank you!',
   },
   hi: {
-    share: '📱 नंबर साझा करें', askPhone: (id) => `ऑर्डर #${id} की पुष्टि के लिए अपना फ़ोन नंबर साझा करें 👇`,
-    askPhoneBot: '📱 Garden Food में ऑर्डर देने के लिए कृपया अपना फ़ोन नंबर साझा करें 👇',
-    hello: 'नमस्ते! वेबसाइट पर ऑर्डर दें या सीधे बॉट में व्यंजन चुनें।',
-    notFound: '❌ ऑर्डर नहीं मिला। कृपया वेबसाइट पर दोबारा ऑर्डर करें।', already: (id) => `ℹ️ ऑर्डर #${id} की पहले ही पुष्टि हो चुकी है।`,
-    expired: '⌛ पुष्टि का समय समाप्त हो गया। कृपया दोबारा ऑर्डर करें।', ownNum: 'कृपया केवल अपना ही नंबर साझा करें।',
-    saved: 'आपका नंबर सहेज लिया गया है।',
-    confirmed: (id, pay) => `✅ <b>ऑर्डर #${id} की पुष्टि हो गई!</b>\n\n${pay}\n\nस्थिति यहाँ और वेबसाइट पर अपडेट होती रहेगी।`,
-    cash: '💵 नकद: डिलीवरी पर कूरियर को भुगतान करें।',
-    card: (n, o, r) => `💳 कार्ड से भुगतान${n ? `:\n<code>${n}</code>${o ? ` (${o})` : ''}` : ''}\nट्रांसफ़र के बाद रसीद Telegram पर ${r || 'हमें'} को भेजें।`,
-    status: (id, s) => `🧾 ऑर्डर #${id}: ${s}`, rate: 'हमारी सेवा कैसी लगी? रेटिंग दें 👇',
-    thanksRate: (n) => `धन्यवाद! आपने ${n}⭐ रेटिंग दी。\nचाहें तो अपनी टिप्पणी यहाँ लिखें 💬`,
-    already2: 'आप पहले ही रेटिंग दे चुके हैं', thanks: 'धन्यवाद!', commentOk: '🙏 आपकी टिप्पणी मिल गई, धन्यवाद!',
+    chooseLang: '🇮🇳 कृपया भाषा चुनें:',
+    share: '📱 नंबर साझा करें',
+    askPhone: '📱 कृपया अपना फ़ोन नंबर साझा करें 👇',
+    ownNum: 'कृपया केवल अपना ही नंबर साझा करें।',
     askLocation: '📍 अब कृपया डिलीवरी का पता तय करने के लिए अपना स्थान साझा करें 👇',
     shareLoc: '📍 स्थान साझा करें',
-    menuTitle: '🍔 मेनू से व्यंजन चुनें:',
+    categoriesTitle: '📂 श्रेणी चुनें:',
     emptyCart: '⚠️ आपकी कार्ट खाली है!',
     cartHeader: '🛒 <b>आपकी कार्ट:</b>\n\n',
+    askNote: '✍️ ऑर्डर के लिए एक सामान्य टिप्पणी लिखें (जैसे, घर का नंबर):',
+    skipNote: '⏭ टिप्पणी छोड़े',
     paymentChoice: '\n💰 <b>कुल:</b> {total} сум\n\nभुगतान का तरीका चुनें:',
     payCash: '💵 नकद',
     payCard: '💳 कार्ड',
-    orderDoneBot: (id, pay) => `🎉 <b>आपका ऑर्डर सफलतापूर्वक स्वीकार कर लिया गया है!</b>\n\n🧾 ऑर्डर आईडी: #${id}\n${pay}\n\nहमारे कर्मचारी जल्द ही आपसे संपर्क करेंगे।`
+    orderDoneBot: (id, pay) => `🎉 <b>आपका ऑर्डर सफलतापूर्वक स्वीकार कर लिया गया है!</b>\n\n🧾 ऑर्डर आईडी: #${id}\n${pay}\n\nहमारे कर्मचारी जल्द ही आपसे संपर्क करेंगे।`,
+    cash: '💵 नकद: डिलीवरी पर कूरियर को भुगतान करें।',
+    card: (n, o, r) => `💳 कार्ड से भुगतान${n ? `:\n<code>${n}</code>${o ? ` (${o})` : ''}` : ''}\nट्रांसफ़र के बाद रसीद Telegram पर ${r || 'हमें'} को भेजें।`,
+    status: (id, s) => `🧾 ऑर्डर #${id}: ${s}`, 
+    rate: 'हमारी सेवा कैसी लगी? रेटिंग दें 👇',
+    thanksRate: (n) => `धन्यवाद! आपने ${n}⭐ रेटिंग दी。\nचाहें तो अपनी टिप्पणी यहाँ लिखें 💬`,
+    already2: 'आप पहले ही रेटिंग दे चुके हैं', thanks: 'धन्यवाद!', commentOk: '🙏 आपकी टिप्पणी मिल गई, धन्यवाद!',
   },
 };
 
@@ -162,11 +162,11 @@ const fmt = (n) => n.toLocaleString('en-US').replace(/,/g, ' ');
 const orderText = (o) =>
   `🧾 <b>Buyurtma #${o.id}</b>\n👤 ${esc(o.name)}${o.username ? ` (@${esc(o.username)})` : ''}\n📞 +${esc(o.phone || '—')}\n📍 ${esc(o.address)}\n` +
   (o.location ? `🗺 <a href="https://maps.google.com/?q=${o.location.lat},${o.location.lng}">Xaritada ochish</a>\n` : '') +
-  (o.zoneFree === true ? '🚚 Yetkazib berish: BEPUL (hudud ichida)\n' : o.zoneFree === false ? '🚚 Yetkazib berish: PULLIK (hudud tashqarida)\n' : '') +
   (o.note ? `📝 Izoh: ${esc(o.note)}\n` : '') +
-  `💳 To'lov: ${o.payment === 'card' ? 'Karta (chek kutilmoqda)' : 'Naqd (kuryerga)'}\n\n` +
-  o.items.map((i, n) => `${n + 1}. ${esc(i.name)} × ${i.qty} = ${fmt(i.price * i.qty)}`).join('\n') +
+  `💳 To'lov: ${o.payment === 'card' ? 'Karta' : 'Naqd'}\n\n` +
+  o.items.map((i, n) => `${n + 1}. ${esc(i.name)} × ${i.qty} = ${fmt(i.price * i.qty)}${i.itemNote ? ` (Izoh: ${esc(i.itemNote)})` : ''}`).join('\n') +
   `\n\n💰 <b>Jami: ${fmt(o.total)} so'm</b>\n📌 Holat: ${STATUS[o.status]}`;
+
 const keyboard = (o) => {
   const row = (NEXT[o.status] || []).map((s) => ({ text: STATUS[s], callback_data: `${o.id}:${s}` }));
   return { inline_keyboard: row.length ? [row] : [] };
@@ -187,7 +187,7 @@ const rate = new Map();
 app.post('/api/order', async (req, res) => {
   try {
     const hits = (rate.get(req.ip) || []).filter((t) => Date.now() - t < 3600000);
-    if (hits.length >= 10) return res.json({ status: 'error', message: "Juda ko'p urinish, keyinroq qayta urinib ko'ring" });
+    if (hits.length >= 10) return res.json({ status: 'error', message: "Juda ko'p urinish" });
     const { name, address, items, payment, location, zoneFree, note, lang } = req.body || {};
     if (!name?.trim() || !address?.trim() || !Array.isArray(items)) return res.json({ status: 'error', message: "Ma'lumotlar to'liq emas" });
 
@@ -231,113 +231,12 @@ const wrap = (fn) => (req, res) => fn(req, res).catch((e) => { console.error(e);
 const BAD = { status: 'error', message: "Ma'lumotlar noto'g'ri" };
 const okId = (id) => /^[A-Za-z0-9_-]{1,60}$/.test(id);
 
-const loginTries = new Map();
-app.post('/api/admin/login', (req, res) => {
-  const t = (loginTries.get(req.ip) || []).filter((x) => Date.now() - x < 900000);
-  if (t.length >= 5) return res.status(429).json({ status: 'error', message: "Juda ko'p urinish, 15 daqiqadan keyin urinib ko'ring" });
-  if (!same(hmac('pw.' + String(req.body?.password || '')), hmac('pw.' + ADMIN_PASSWORD))) {
-    loginTries.set(req.ip, [...t, Date.now()]);
-    return res.json({ status: 'error', message: "Parol noto'g'ri" });
-  }
-  const exp = Date.now() + 12 * 3600e3;
-  res.json({ status: 'ok', token: `${exp}.${hmac('admin.' + exp)}` });
-});
-
-const cleanItem = (b = {}) => {
-  const price = Math.round(Number(b.price));
-  if (!String(b.name || '').trim() || !(price >= 0) || price > 10000000 || !String(b.category || '').trim()) return null;
-  return {
-    name: String(b.name).trim().slice(0, 60), price, category: String(b.category).trim().slice(0, 40),
-    img: String(b.img || '').trim().slice(0, 300), available: b.available !== false,
-    sort: Number.isFinite(+b.sort) && b.sort !== undefined ? +b.sort : Date.now(),
-  };
-};
-async function ensureCat(cat) {
-  const ref = db.ref('menu/categories');
-  const cur = (await ref.get()).val() || [];
-  if (!cur.includes(cat)) await ref.set([...cur, cat]);
-}
-
-app.get('/api/admin/menu', adminAuth, wrap(async (_, res) => res.json({ status: 'ok', menu: (await db.ref('menu').get()).val() || {} })));
-app.post('/api/admin/item', adminAuth, wrap(async (req, res) => {
-  const it = cleanItem(req.body);
-  if (!it) return res.json(BAD);
-  const id = crypto.randomBytes(4).toString('hex');
-  await db.ref('menu/items/' + id).set(it);
-  await ensureCat(it.category);
-  res.json({ status: 'ok', id });
-}));
-app.put('/api/admin/item/:id', adminAuth, wrap(async (req, res) => {
-  const it = cleanItem(req.body);
-  if (!it || !okId(req.params.id)) return res.json(BAD);
-  const ref = db.ref('menu/items/' + req.params.id);
-  const cur = (await ref.get()).val();
-  if (!cur) return res.json({ status: 'error', message: 'Taom topilmadi' });
-  if (req.body.sort === undefined) it.sort = cur.sort ?? it.sort;
-  await ref.set(it);
-  await ensureCat(it.category);
-  res.json({ status: 'ok' });
-}));
-app.delete('/api/admin/item/:id', adminAuth, wrap(async (req, res) => {
-  if (!okId(req.params.id)) return res.json(BAD);
-  await db.ref('menu/items/' + req.params.id).remove();
-  res.json({ status: 'ok' });
-}));
-app.put('/api/admin/categories', adminAuth, wrap(async (req, res) => {
-  const c = [...new Set((req.body?.categories || []).map((x) => String(x).trim().slice(0, 40)).filter(Boolean))].slice(0, 30);
-  if (!c.length) return res.json(BAD);
-  await db.ref('menu/categories').set(c);
-  res.json({ status: 'ok' });
-}));
-app.post('/api/admin/seed', adminAuth, wrap(async (req, res) => {
-  const cur = (await db.ref('menu/items').get()).val();
-  if (cur && Object.keys(cur).length && !req.body?.force) return res.json({ status: 'error', message: 'Menyu allaqachon yuklangan' });
-  await db.ref('menu').set({ categories: SEED.categories, items: Object.fromEntries(SEED.items.map(({ id, ...v }) => [id, v])) });
-  res.json({ status: 'ok' });
-}));
-
-// ---------- Baholar ----------
-async function addReview(id, rating, comment = '') {
-  const ref = db.ref('ordersPrivate/' + id);
-  const o = (await ref.get()).val();
-  const n = Math.round(Number(rating));
-  if (!o || o.status !== 'done' || !(n >= 1 && n <= 5) || o.review) return null;
-  const review = { rating: n, comment: String(comment || '').trim().slice(0, 500), createdAt: Date.now() };
-  await ref.update({ review });
-  await db.ref('reviews/' + id).set({ ...review, name: o.name });
-  send(ADMIN_CHAT_ID, `⭐ <b>Yangi baho: ${n}/5</b> — #${id} (${esc(o.name)})${review.comment ? `\n💬 ${esc(review.comment)}` : ''}`).catch(() => {});
-  return review;
-}
-async function addComment(id, text) {
-  const o = (await db.ref('ordersPrivate/' + id).get()).val();
-  const comment = String(text).trim().slice(0, 500);
-  if (!o?.review || o.review.comment || !comment) return false;
-  await db.ref(`ordersPrivate/${id}/review/comment`).set(comment);
-  await db.ref(`reviews/${id}/comment`).set(comment);
-  send(ADMIN_CHAT_ID, `💬 <b>Izoh</b> — #${id} (${esc(o.name)}) ${o.review.rating}⭐:\n${esc(comment)}`).catch(() => {});
-  return lg(o.lang);
-}
-const reviewHits = new Map();
-app.post('/api/review', wrap(async (req, res) => {
-  const h = (reviewHits.get(req.ip) || []).filter((t) => Date.now() - t < 3600000);
-  if (h.length >= 20) return res.json({ status: 'error', message: "Juda ko'p urinish" });
-  reviewHits.set(req.ip, [...h, Date.now()]);
-  const { orderId, rating, comment } = req.body || {};
-  const rv = okId(String(orderId)) ? await addReview(String(orderId), rating, comment) : null;
-  res.json(rv ? { status: 'ok' } : { status: 'error', message: 'Baho qabul qilinmadi' });
-}));
-app.get('/api/admin/reviews', adminAuth, wrap(async (_, res) => {
-  const all = Object.entries((await db.ref('reviews').get()).val() || {}).map(([id, v]) => ({ id, ...v })).sort((a, b) => b.createdAt - a.createdAt);
-  const avg = all.length ? Math.round((all.reduce((s, x) => s + x.rating, 0) / all.length) * 10) / 10 : 0;
-  res.json({ status: 'ok', count: all.length, avg, list: all.slice(0, 50) });
-}));
-
 app.listen(PORT, () => console.log('Server port', PORT));
 
 // ==========================================
 // ---------- TELEGRAM BOT (GIBRID) ---------
 // ==========================================
-const botSessions = {}; // { chatId: { step, orderId, phone, location, cart, lang } }
+const botSessions = {}; // { chatId: { step, lang, phone, location, cart, orderId, pendingItemNote, orderNote } }
 
 async function confirmOrderFromWeb(o, chat, phone, from) {
   const upd = { status: 'pending', phone, chatId: chat, username: from.username || null, confirmedAt: Date.now() };
@@ -350,55 +249,24 @@ async function confirmOrderFromWeb(o, chat, phone, from) {
   await send(ADMIN_CHAT_ID, orderText(o), { reply_markup: keyboard(o) });
 }
 
-async function renderMenu(chat) {
-  const session = botSessions[chat];
-  const lang = session.lang || 'uz';
-  session.step = 'menu';
-  const T = B[lang];
-
-  const itemsObj = Object.keys(LIVE).length ? LIVE : SEED.items;
-  let inlineKeyboard = [];
-
-  for (const [key, item] of Object.entries(itemsObj)) {
-    if (item.available === false) continue;
-    const cartQty = session.cart[key] ? ` (${session.cart[key]}x)` : '';
-    inlineKeyboard.push([
-      { text: `${item.name} — ${fmt(item.price)} so'm${cartQty}`, callback_data: `add:${key}` }
-    ]);
-  }
-  inlineKeyboard.push([{ text: "🛒 Savatchani ko'rish / Rasmiylashtirish", callback_data: "view_cart" }]);
-
-  await send(chat, T.menuTitle, { reply_markup: { inline_keyboard: inlineKeyboard, remove_keyboard: true } });
-}
-
 async function onStart(m, orderId) {
   const chat = m.chat.id;
-  const lang = fromTg(m.from.language_code);
-  const T = B[lang];
+  botSessions[chat] = { cart: {}, orderId: orderId || null, step: 'choosing_lang' };
 
-  botSessions[chat] = { lang, cart: {} };
+  const langMarkup = {
+    inline_keyboard: [
+      [{ text: "🇺🇿 O'zbekcha", callback_data: "lang:uz" }, { text: "🇷🇺 Русский", callback_data: "lang:ru" }],
+      [{ text: "🇬🇧 English", callback_data: "lang:en" }, { text: "🇮🇳 हिन्दी", callback_data: "lang:hi" }]
+    ]
+  };
+  await send(chat, B.uz.chooseLang, { reply_markup: langMarkup });
+}
 
-  if (orderId) {
-    const o = (await db.ref('ordersPrivate/' + orderId).get()).val();
-    if (!o) return send(chat, T.notFound);
-    if (o.status !== 'unconfirmed') return send(chat, T.already(orderId));
-    if (Date.now() - o.createdAt > EXPIRE_MS) return send(chat, T.expired);
-    botSessions[chat].orderId = orderId;
-  }
-
-  const known = (await db.ref('users/' + chat).get()).val();
-  if (known?.phone) {
-    botSessions[chat].phone = known.phone;
-    if (botSessions[chat].orderId) {
-      const o = (await db.ref('ordersPrivate/' + botSessions[chat].orderId).get()).val();
-      return confirmOrderFromWeb(o, chat, known.phone, m.from);
-    }
-    return askLocationStep(chat);
-  }
-
-  botSessions[chat].step = 'waiting_phone';
-  const textMsg = botSessions[chat].orderId ? T.askPhone(botSessions[chat].orderId) : T.askPhoneBot;
-  await send(chat, textMsg, {
+async function askPhoneStep(chat) {
+  const session = botSessions[chat];
+  const T = B[session.lang];
+  session.step = 'waiting_phone';
+  await send(chat, T.askPhone, {
     reply_markup: { keyboard: [[{ text: T.share, request_contact: true }]], resize_keyboard: true, one_time_keyboard: true },
   });
 }
@@ -407,18 +275,83 @@ async function askLocationStep(chat) {
   const session = botSessions[chat];
   const T = B[session.lang];
   session.step = 'waiting_location';
-
   await send(chat, T.askLocation, {
     reply_markup: { keyboard: [[{ text: T.shareLoc, request_location: true }]], resize_keyboard: true, one_time_keyboard: true },
+  });
+}
+
+// Kategoriyalarni chiqarish
+async function showCategories(chat) {
+  const session = botSessions[chat];
+  session.step = 'categories';
+  const T = B[session.lang];
+
+  const itemsObj = Object.keys(LIVE).length ? LIVE : SEED.items;
+  const categories = [...new Set(Object.values(itemsObj).map(i => i.category || 'Asosiy'))];
+
+  let inlineKeyboard = [];
+  for (const cat of categories) {
+    inlineKeyboard.push([{ text: `📂 ${cat}`, callback_data: `cat:${cat}` }]);
+  }
+  inlineKeyboard.push([{ text: "🛒 Savatchani ko'rish", callback_data: "view_cart" }]);
+
+  await send(chat, T.categoriesTitle, { reply_markup: { inline_keyboard: inlineKeyboard, remove_keyboard: true } });
+}
+
+// Tanlangan kategoriya mahsulotlarini rasmlari va tarkibi bilan chiqarish
+async function showCategoryItems(chat, categoryName) {
+  const session = botSessions[chat];
+  session.step = 'category_items';
+  const itemsObj = Object.keys(LIVE).length ? LIVE : SEED.items;
+
+  for (const [key, item] of Object.entries(itemsObj)) {
+    if (item.available === false) continue;
+    if ((item.category || 'Asosiy') !== categoryName) continue;
+
+    const desc = item.description ? `\n📝 <b>Tarkibi:</b> ${esc(item.description)}` : '';
+    const caption = `<b>${esc(item.name)}</b>${desc}\n💰 <b>Narxi:</b> ${fmt(item.price)} so'm`;
+
+    const itemKeyboard = {
+      inline_keyboard: [
+        [
+          { text: "➕ Qo'shish", callback_data: `add_item:${key}` },
+          { text: "✍️ Izoh yozish", callback_data: `note_item:${key}` }
+        ]
+      ]
+    };
+
+    if (item.img && item.img.startsWith('http')) {
+      try {
+        await tg('sendPhoto', {
+          chat_id: chat,
+          photo: item.img,
+          caption: caption,
+          parse_mode: 'HTML',
+          reply_markup: itemKeyboard
+        });
+      } catch (err) {
+        await send(chat, caption, { reply_markup: itemKeyboard });
+      }
+    } else {
+      await send(chat, caption, { reply_markup: itemKeyboard });
+    }
+  }
+
+  await send(chat, "Boshqa kategoriyani tanlang yoki savatchaga o'ting:", {
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: "📂 Kategoriyaga qaytish", callback_data: "back_categories" }],
+        [{ text: "🛒 Savatchani ko'rish / Rasmiylashtirish", callback_data: "view_cart" }]
+      ]
+    }
   });
 }
 
 async function onMessage(m) {
   if (m.chat.type !== 'private') return;
   const chat = m.chat.id;
-  const lang = fromTg(m.from.language_code);
-  const T = B[lang];
-  const session = botSessions[chat] || { lang, cart: {} };
+  const session = botSessions[chat] || { lang: 'uz', cart: {} };
+  const T = B[session.lang];
 
   if (m.text?.startsWith('/start')) {
     const parts = m.text.split(' ');
@@ -441,9 +374,28 @@ async function onMessage(m) {
 
   if (m.location && session.step === 'waiting_location') {
     session.location = { lat: m.location.latitude, lng: m.location.longitude };
-    return renderMenu(chat);
+    return showCategories(chat);
   }
 
+  // Har bir mahsulot uchun yozilgan izohni qabul qilish
+  if (m.text && session.step === 'waiting_item_note') {
+    const itemId = session.pendingItemNote;
+    if (itemId) {
+      session.cart[itemId] = session.cart[itemId] || { qty: 1, note: '' };
+      session.cart[itemId].note = m.text.trim().slice(0, 200);
+      await send(chat, "✅ Mahsulotga izoh saqlandi!");
+    }
+    session.step = 'categories';
+    return showCategories(chat);
+  }
+
+  // Buyurtma oxirida umumiy izohni qabul qilish
+  if (m.text && session.step === 'waiting_order_note') {
+    session.orderNote = m.text.trim().slice(0, 300);
+    return finalizeOrderProcess(chat);
+  }
+
+  // Baholashdan keyingi izoh
   if (m.text && !m.text.startsWith('/')) {
     const oid = (await db.ref('reviewPending/' + chat).get()).val();
     const cl = oid ? await addComment(oid, m.text) : false;
@@ -459,6 +411,100 @@ async function onCallback(cb) {
   const session = botSessions[chat] || { lang: 'uz', cart: {} };
   const T = B[session.lang];
 
+  if (cb.data?.startsWith('lang:')) {
+    const chosenLang = cb.data.replace('lang:', '');
+    session.lang = chosenLang;
+    await tg('answerCallbackQuery', { callback_query_id: cb.id });
+
+    const known = (await db.ref('users/' + chat).get()).val();
+    if (known?.phone) {
+      session.phone = known.phone;
+      if (session.orderId) {
+        const o = (await db.ref('ordersPrivate/' + session.orderId).get()).val();
+        if (o && o.status === 'unconfirmed') {
+          return confirmOrderFromWeb(o, chat, known.phone, cb.from);
+        }
+      }
+      return askLocationStep(chat);
+    }
+    return askPhoneStep(chat);
+  }
+
+  if (cb.data?.startsWith('cat:')) {
+    const catName = cb.data.replace('cat:', '');
+    await tg('answerCallbackQuery', { callback_query_id: cb.id });
+    return showCategoryItems(chat, catName);
+  }
+
+  if (cb.data === 'back_categories') {
+    await tg('answerCallbackQuery', { callback_query_id: cb.id });
+    return showCategories(chat);
+  }
+
+  if (cb.data?.startsWith('add_item:')) {
+    const itemId = cb.data.replace('add_item:', '');
+    if (!session.cart[itemId]) session.cart[itemId] = { qty: 1, note: '' };
+    else session.cart[itemId].qty += 1;
+
+    await tg('answerCallbackQuery', { callback_query_id: cb.id, text: '✅ Savatchaga qo\'shildi' });
+    return;
+  }
+
+  if (cb.data?.startsWith('note_item:')) {
+    const itemId = cb.data.replace('note_item:', '');
+    session.pendingItemNote = itemId;
+    session.step = 'waiting_item_note';
+    await tg('answerCallbackQuery', { callback_query_id: cb.id });
+    return send(chat, "✍️ Ushbu mahsulot uchun izohingizni yuboring (masalan: piyoz bo'lmasin):");
+  }
+
+  if (cb.data === 'view_cart') {
+    const cart = session.cart || {};
+    const keys = Object.keys(cart);
+    if (!keys.length) return tg('answerCallbackQuery', { callback_query_id: cb.id, text: T.emptyCart, show_alert: true });
+
+    let text = T.cartHeader;
+    let total = 0;
+    const itemsObj = Object.keys(LIVE).length ? LIVE : SEED.items;
+
+    let index = 1;
+    for (const [itemId, data] of Object.entries(cart)) {
+      const item = itemsObj[itemId];
+      if (item) {
+        const sum = item.price * data.qty;
+        total += sum;
+        text += `${index++}. ${item.name} x ${data.qty} = ${fmt(sum)} so'm${data.note ? `\n   └ <i>Izoh: ${esc(data.note)}</i>` : ''}\n`;
+      }
+    }
+
+    text += T.paymentChoice.replace('{total}', fmt(total));
+    const payKeyboard = {
+      inline_keyboard: [
+        [{ text: T.payCash, callback_data: 'pay_cash' }, { text: T.payCard, callback_data: 'pay_card' }],
+        [{ text: '📂 Kategoriyaga qaytish', callback_data: 'back_categories' }]
+      ]
+    };
+
+    await tg('answerCallbackQuery', { callback_query_id: cb.id });
+    return tg('editMessageText', { chat_id: chat, message_id: cb.message.message_id, text, parse_mode: 'HTML', reply_markup: payKeyboard });
+  }
+
+  if (cb.data?.startsWith('pay_')) {
+    session.paymentType = cb.data === 'pay_cash' ? 'cash' : 'card';
+    session.step = 'waiting_order_note';
+    await tg('answerCallbackQuery', { callback_query_id: cb.id });
+    return send(chat, T.askNote, {
+      reply_markup: { inline_keyboard: [[{ text: T.skipNote, callback_data: 'skip_note' }]] }
+    });
+  }
+
+  if (cb.data === 'skip_note') {
+    session.orderNote = '';
+    await tg('answerCallbackQuery', { callback_query_id: cb.id });
+    return finalizeOrderProcess(chat);
+  }
+
+  // Admin va baholash qismi
   if (cb.data?.startsWith('rate:')) {
     const [, oid, n] = cb.data.split(':');
     const ord = (await db.ref('ordersPrivate/' + oid).get()).val();
@@ -472,102 +518,6 @@ async function onCallback(cb) {
     return;
   }
 
-  if (cb.data?.startsWith('add:')) {
-    const itemId = cb.data.replace('add:', '');
-    session.cart[itemId] = (session.cart[itemId] || 0) + 1;
-    await tg('answerCallbackQuery', { callback_query_id: cb.id, text: '✅ Savatchaga qo\'shildi' });
-    return renderMenu(chat);
-  }
-
-  if (cb.data === 'view_cart') {
-    const cart = session.cart || {};
-    const keys = Object.keys(cart);
-    if (!keys.length) return tg('answerCallbackQuery', { callback_query_id: cb.id, text: T.emptyCart, show_alert: true });
-
-    let text = T.cartHeader;
-    let total = 0;
-    const itemsObj = Object.keys(LIVE).length ? LIVE : SEED.items;
-
-    let index = 1;
-    for (const [itemId, qty] of Object.entries(cart)) {
-      const item = itemsObj[itemId];
-      if (item) {
-        const sum = item.price * qty;
-        total += sum;
-        text += `${index++}. ${item.name} x ${qty} = ${fmt(sum)} so'm\n`;
-      }
-    }
-
-    text += T.paymentChoice.replace('{total}', fmt(total));
-    const payKeyboard = {
-      inline_keyboard: [
-        [{ text: T.payCash, callback_data: 'pay_cash' }, { text: T.payCard, callback_data: 'pay_card' }],
-        [{ text: '⬅️ Menyuqqa qaytish', callback_data: 'back_menu' }]
-      ]
-    };
-
-    await tg('answerCallbackQuery', { callback_query_id: cb.id });
-    return tg('editMessageText', { chat_id: chat, message_id: cb.message.message_id, text, parse_mode: 'HTML', reply_markup: payKeyboard });
-  }
-
-  if (cb.data === 'back_menu') {
-    await tg('answerCallbackQuery', { callback_query_id: cb.id });
-    return renderMenu(chat);
-  }
-
-  if (cb.data?.startsWith('pay_')) {
-    const paymentType = cb.data === 'pay_cash' ? 'cash' : 'card';
-    const cart = session.cart || {};
-    const itemsObj = Object.keys(LIVE).length ? LIVE : SEED.items;
-
-    let lines = [];
-    let total = 0;
-    for (const [itemId, qty] of Object.entries(cart)) {
-      const item = itemsObj[itemId];
-      if (item) {
-        lines.push({ name: item.name, qty, price: Number(item.price) });
-        total += item.price * qty;
-      }
-    }
-
-    if (!lines.length) return tg('answerCallbackQuery', { callback_query_id: cb.id, text: T.emptyCart, show_alert: true });
-
-    const id = 'GF-' + crypto.randomBytes(3).toString('hex').toUpperCase();
-    const orderObj = {
-      id,
-      name: 'Telegram Mijoz',
-      address: 'Telegram Bot (Geolokatsiya orqali)',
-      items: lines,
-      total,
-      status: 'pending', // Botdan to'g'ridan-to'g'ri berilgani uchun darhol Qabul qilindi bo'ladi
-      createdAt: Date.now(),
-      payment: paymentType,
-      note: 'Telegram Bot orqali berildi',
-      lang: session.lang,
-      location: session.location || null,
-      phone: session.phone,
-      chatId: chat,
-    };
-
-    await db.ref('ordersPrivate/' + id).set(orderObj);
-    await setPublic(id, 'pending');
-
-    session.cart = {}; // savatchani tozalash
-
-    await tg('answerCallbackQuery', { callback_query_id: cb.id });
-    await tg('editMessageText', {
-      chat_id: chat,
-      message_id: cb.message.message_id,
-      text: T.orderDoneBot(id, paymentType === 'card' ? payNote(orderObj) : T.cash),
-      parse_mode: 'HTML'
-    });
-
-    // Admin guruhiga yuborish
-    await send(ADMIN_CHAT_ID, orderText(orderObj), { reply_markup: keyboard(orderObj) });
-    return;
-  }
-
-  // Admin panel guruhidagi status o'zgartirish tugmalari
   const [id, status] = (cb.data || '').split(':');
   if (!id || !status) return;
   const ref = db.ref('ordersPrivate/' + id);
@@ -586,6 +536,48 @@ async function onCallback(cb) {
   if (o.chatId) send(o.chatId, B[lg(o.lang)].status(id, SL[lg(o.lang)][status])).catch(() => {});
   if (status === 'done' && o.chatId)
     send(o.chatId, B[lg(o.lang)].rate, { reply_markup: { inline_keyboard: [[1, 2, 3, 4, 5].map((n) => ({ text: `${n}⭐`, callback_data: `rate:${id}:${n}` }))]} }).catch(() => {});
+}
+
+async function finalizeOrderProcess(chat) {
+  const session = botSessions[chat];
+  const T = B[session.lang];
+  const cart = session.cart || {};
+  const itemsObj = Object.keys(LIVE).length ? LIVE : SEED.items;
+
+  let lines = [];
+  let total = 0;
+  for (const [itemId, data] of Object.entries(cart)) {
+    const item = itemsObj[itemId];
+    if (item) {
+      lines.push({ name: item.name, qty: data.qty, price: Number(item.price), itemNote: data.note || '' });
+      total += item.price * data.qty;
+    }
+  }
+
+  const id = 'GF-' + crypto.randomBytes(3).toString('hex').toUpperCase();
+  const orderObj = {
+    id,
+    name: 'Telegram Mijoz',
+    address: 'Telegram Bot (Geolokatsiya)',
+    items: lines,
+    total,
+    status: 'pending',
+    createdAt: Date.now(),
+    payment: session.paymentType,
+    note: session.orderNote || 'Izoh yo\'q',
+    lang: session.lang,
+    location: session.location || null,
+    phone: session.phone,
+    chatId: chat,
+  };
+
+  await db.ref('ordersPrivate/' + id).set(orderObj);
+  await setPublic(id, 'pending');
+
+  session.cart = {};
+
+  await send(chat, T.orderDoneBot(id, session.paymentType === 'card' ? payNote(orderObj) : T.cash), { parse_mode: 'HTML' });
+  await send(ADMIN_CHAT_ID, orderText(orderObj), { reply_markup: keyboard(orderObj) });
 }
 
 await tg('deleteWebhook', { drop_pending_updates: false });
