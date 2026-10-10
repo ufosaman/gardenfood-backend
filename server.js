@@ -36,6 +36,73 @@ const NEXT = {
 };
 const EXPIRE_MS = 30 * 60 * 1000;
 
+// ---------- Tillar (mijozga boradigan bot xabarlari) ----------
+const LANGS = ['uz', 'ru', 'en', 'hi'];
+const lg = (x) => (LANGS.includes(x) ? x : 'uz');
+const fromTg = (code) => lg(String(code || '').slice(0, 2));
+const SL = {
+  uz: STATUS,
+  ru: { unconfirmed: '⏳ Подтвердите в Telegram', pending: '📝 Заказ принят', confirmed: '✅ Подтверждён', preparing: '👨‍🍳 Готовится', delivering: '🚚 В пути', done: '🎉 Доставлен', cancelled: '❌ Отменён' },
+  en: { unconfirmed: '⏳ Confirm in Telegram', pending: '📝 Order received', confirmed: '✅ Confirmed', preparing: '👨‍🍳 Preparing', delivering: '🚚 On the way', done: '🎉 Delivered', cancelled: '❌ Cancelled' },
+  hi: { unconfirmed: '⏳ Telegram में पुष्टि करें', pending: '📝 ऑर्डर प्राप्त हुआ', confirmed: '✅ पुष्टि हो गई', preparing: '👨‍🍳 तैयार हो रहा है', delivering: '🚚 रास्ते में', done: '🎉 डिलीवर हो गया', cancelled: '❌ रद्द किया गया' },
+};
+const B = {
+  uz: {
+    share: '📱 Raqamni ulashish', askPhone: (id) => `Buyurtma #${id} ni tasdiqlash uchun telefon raqamingizni ulashing 👇`,
+    hello: 'Salom! Buyurtmani tasdiqlash uchun avval saytdan buyurtma bering.',
+    notFound: '❌ Buyurtma topilmadi. Saytdan qaytadan buyurtma bering.', already: (id) => `ℹ️ Buyurtma #${id} allaqachon tasdiqlangan.`,
+    expired: '⌛ Buyurtma muddati tugagan. Saytdan qaytadan buyurtma bering.', ownNum: "Iltimos, faqat o'zingizning raqamingizni ulashing.",
+    saved: 'Raqamingiz saqlandi. Buyurtmani saytdan bering.',
+    confirmed: (id, pay) => `✅ <b>Buyurtma #${id} tasdiqlandi!</b>\n\n${pay}\n\nHolat saytda va shu yerda yangilanib turadi.`,
+    cash: "💵 Naqd: kuryer yetib kelganda to'laysiz.",
+    card: (n, o, r) => `💳 Karta orqali to'lov${n ? `:\n<code>${n}</code>${o ? ` (${o})` : ''}` : ''}\nTo'lovdan so'ng chekni ${r || 'bizga'} ga Telegram orqali yuboring.`,
+    status: (id, s) => `🧾 Buyurtma #${id}: ${s}`, rate: 'Xizmatimiz yoqdimi? Baholang 👇',
+    thanksRate: (n) => `Rahmat! Siz ${n}⭐ baho berdingiz.\nXohlasangiz, izohingizni shu yerga yozing 💬`,
+    already2: 'Siz allaqachon baho bergansiz', thanks: 'Rahmat!', commentOk: '🙏 Izohingiz qabul qilindi, rahmat!',
+  },
+  ru: {
+    share: '📱 Поделиться номером', askPhone: (id) => `Чтобы подтвердить заказ #${id}, поделитесь номером телефона 👇`,
+    hello: 'Здравствуйте! Чтобы подтвердить заказ, сначала оформите его на сайте.',
+    notFound: '❌ Заказ не найден. Оформите заказ на сайте заново.', already: (id) => `ℹ️ Заказ #${id} уже подтверждён.`,
+    expired: '⌛ Срок подтверждения заказа истёк. Оформите заказ на сайте заново.', ownNum: 'Пожалуйста, поделитесь только своим номером.',
+    saved: 'Ваш номер сохранён. Оформите заказ на сайте.',
+    confirmed: (id, pay) => `✅ <b>Заказ #${id} подтверждён!</b>\n\n${pay}\n\nСтатус обновляется на сайте и здесь.`,
+    cash: '💵 Наличными: оплата курьеру при получении.',
+    card: (n, o, r) => `💳 Оплата картой${n ? `:\n<code>${n}</code>${o ? ` (${o})` : ''}` : ''}\nПосле перевода отправьте чек ${r || 'нам'} в Telegram.`,
+    status: (id, s) => `🧾 Заказ #${id}: ${s}`, rate: 'Понравилось обслуживание? Оцените 👇',
+    thanksRate: (n) => `Спасибо! Вы поставили ${n}⭐.\nЕсли хотите, напишите отзыв сюда 💬`,
+    already2: 'Вы уже оценили заказ', thanks: 'Спасибо!', commentOk: '🙏 Ваш отзыв принят, спасибо!',
+  },
+  en: {
+    share: '📱 Share my number', askPhone: (id) => `To confirm order #${id}, please share your phone number 👇`,
+    hello: 'Hello! Please place your order on the website first to confirm it.',
+    notFound: '❌ Order not found. Please place the order on the website again.', already: (id) => `ℹ️ Order #${id} is already confirmed.`,
+    expired: '⌛ The confirmation window has expired. Please place the order again.', ownNum: 'Please share only your own number.',
+    saved: 'Your number is saved. Place your order on the website.',
+    confirmed: (id, pay) => `✅ <b>Order #${id} confirmed!</b>\n\n${pay}\n\nThe status is updated here and on the website.`,
+    cash: '💵 Cash: pay the courier on delivery.',
+    card: (n, o, r) => `💳 Card payment${n ? `:\n<code>${n}</code>${o ? ` (${o})` : ''}` : ''}\nAfter the transfer, please send the receipt to ${r || 'us'} on Telegram.`,
+    status: (id, s) => `🧾 Order #${id}: ${s}`, rate: 'Did you like our service? Rate us 👇',
+    thanksRate: (n) => `Thank you! You gave ${n}⭐.\nIf you like, write your comment here 💬`,
+    already2: 'You have already rated this order', thanks: 'Thank you!', commentOk: '🙏 Your comment was received, thank you!',
+  },
+  hi: {
+    share: '📱 नंबर साझा करें', askPhone: (id) => `ऑर्डर #${id} की पुष्टि के लिए अपना फ़ोन नंबर साझा करें 👇`,
+    hello: 'नमस्ते! ऑर्डर की पुष्टि के लिए पहले वेबसाइट पर ऑर्डर करें।',
+    notFound: '❌ ऑर्डर नहीं मिला। कृपया वेबसाइट पर दोबारा ऑर्डर करें।', already: (id) => `ℹ️ ऑर्डर #${id} की पहले ही पुष्टि हो चुकी है।`,
+    expired: '⌛ पुष्टि का समय समाप्त हो गया। कृपया दोबारा ऑर्डर करें।', ownNum: 'कृपया केवल अपना ही नंबर साझा करें।',
+    saved: 'आपका नंबर सहेज लिया गया है। वेबसाइट पर ऑर्डर करें।',
+    confirmed: (id, pay) => `✅ <b>ऑर्डर #${id} की पुष्टि हो गई!</b>\n\n${pay}\n\nस्थिति यहाँ और वेबसाइट पर अपडेट होती रहेगी।`,
+    cash: '💵 नकद: डिलीवरी पर कूरियर को भुगतान करें।',
+    card: (n, o, r) => `💳 कार्ड से भुगतान${n ? `:\n<code>${n}</code>${o ? ` (${o})` : ''}` : ''}\nट्रांसफ़र के बाद रसीद Telegram पर ${r || 'हमें'} को भेजें।`,
+    status: (id, s) => `🧾 ऑर्डर #${id}: ${s}`, rate: 'हमारी सेवा कैसी लगी? रेटिंग दें 👇',
+    thanksRate: (n) => `धन्यवाद! आपने ${n}⭐ रेटिंग दी।\nचाहें तो अपनी टिप्पणी यहाँ लिखें 💬`,
+    already2: 'आप पहले ही रेटिंग दे चुके हैं', thanks: 'धन्यवाद!', commentOk: '🙏 आपकी टिप्पणी मिल गई, धन्यवाद!',
+  },
+};
+// Saytga: holat matni (admin guruhi uchun o'zbekcha) + kaliti (sayt o'z tiliga tarjima qiladi)
+const setPublic = (id, key) => db.ref('orders/' + id).update({ status: STATUS[key], statusKey: key });
+
 const SEED = JSON.parse(fs.readFileSync('./menu.json', 'utf8')); // { categories, items } — boshlang'ich menyu
 let LIVE = {};                                                    // Firebase'dagi joriy menyu (admin o'zgartirsa darhol yangilanadi)
 db.ref('menu/items').on('value', (s) => { LIVE = s.val() || {}; });
@@ -57,6 +124,7 @@ const orderText = (o) =>
   `🧾 <b>Buyurtma #${o.id}</b>\n👤 ${esc(o.name)}${o.username ? ` (@${esc(o.username)})` : ''}\n📞 +${esc(o.phone || '—')}\n📍 ${esc(o.address)}\n` +
   (o.location ? `🗺 <a href="https://maps.google.com/?q=${o.location.lat},${o.location.lng}">Xaritada ochish</a>\n` : '') +
   (o.zoneFree === true ? '🚚 Yetkazib berish: BEPUL (hudud ichida)\n' : o.zoneFree === false ? '🚚 Yetkazib berish: PULLIK (hudud tashqarida)\n' : '') +
+  (o.note ? `📝 Izoh: ${esc(o.note)}\n` : '') +
   `💳 To'lov: ${o.payment === 'card' ? 'Karta (chek kutilmoqda)' : 'Naqd (kuryerga)'}\n\n` +
   o.items.map((i, n) => `${n + 1}. ${esc(i.name)} × ${i.qty} = ${fmt(i.price * i.qty)}`).join('\n') +
   `\n\n💰 <b>Jami: ${fmt(o.total)} so'm</b>\n📌 Holat: ${STATUS[o.status]}`;
@@ -64,10 +132,10 @@ const keyboard = (o) => {
   const row = (NEXT[o.status] || []).map((s) => ({ text: STATUS[s], callback_data: `${o.id}:${s}` }));
   return { inline_keyboard: row.length ? [row] : [] };
 };
-const payNote = (o) =>
-  o.payment === 'card'
-    ? `💳 Karta orqali to'lov${CARD_NUMBER ? `:\n<code>${esc(CARD_NUMBER)}</code>${CARD_OWNER ? ` (${esc(CARD_OWNER)})` : ''}` : ''}\nTo'lovdan so'ng chekni ${RECEIPT_TG ? esc(RECEIPT_TG) : 'bizga'} ga Telegram orqali yuboring.`
-    : "💵 Naqd: kuryer yetib kelganda to'laysiz.";
+const payNote = (o) => {
+  const T = B[lg(o.lang)];
+  return o.payment === 'card' ? T.card(esc(CARD_NUMBER), esc(CARD_OWNER), esc(RECEIPT_TG)) : T.cash;
+};
 
 // ---------- API ----------
 const app = express();
@@ -81,7 +149,7 @@ app.post('/api/order', async (req, res) => {
   try {
     const hits = (rate.get(req.ip) || []).filter((t) => Date.now() - t < 3600000);
     if (hits.length >= 10) return res.json({ status: 'error', message: "Juda ko'p urinish, keyinroq qayta urinib ko'ring" });
-    const { name, address, items, payment, location, zoneFree } = req.body || {};
+    const { name, address, items, payment, location, zoneFree, note, lang } = req.body || {};
     if (!name?.trim() || !address?.trim() || !Array.isArray(items)) return res.json({ status: 'error', message: "Ma'lumotlar to'liq emas" });
 
     const lines = items
@@ -97,11 +165,13 @@ app.post('/api/order', async (req, res) => {
       id, name: name.trim().slice(0, 80), address: address.trim().slice(0, 200), items: lines,
       total: lines.reduce((s, i) => s + i.price * i.qty, 0), status: 'unconfirmed', createdAt: Date.now(),
       payment: payment === 'card' ? 'card' : 'cash',
+      note: String(note || '').trim().slice(0, 300),
+      lang: lg(lang),
       location: location && Number.isFinite(+location.lat) && Number.isFinite(+location.lng) ? { lat: +location.lat, lng: +location.lng } : null,
       zoneFree: typeof zoneFree === 'boolean' ? zoneFree : null,
     };
     await db.ref('ordersPrivate/' + id).set(o);               // to'liq ma'lumot — mijozlarga yopiq
-    await db.ref(`orders/${id}/status`).set(STATUS.unconfirmed); // faqat holat — saytga ochiq
+    await setPublic(id, 'unconfirmed'); // faqat holat — saytga ochiq
     rate.set(req.ip, [...hits, Date.now()]);
     res.json({ status: 'ok', orderId: id, botLink: `https://t.me/${BOT_USERNAME}?start=${id}` });
   } catch (e) {
@@ -192,6 +262,42 @@ app.post('/api/admin/seed', adminAuth, wrap(async (req, res) => {
   res.json({ status: 'ok' });
 }));
 
+// ---------- Baho va izohlar ----------
+async function addReview(id, rating, comment = '') {
+  const ref = db.ref('ordersPrivate/' + id);
+  const o = (await ref.get()).val();
+  const n = Math.round(Number(rating));
+  if (!o || o.status !== 'done' || !(n >= 1 && n <= 5) || o.review) return null; // faqat yetkazilgan va hali baholanmagan buyurtma
+  const review = { rating: n, comment: String(comment || '').trim().slice(0, 500), createdAt: Date.now() };
+  await ref.update({ review });
+  await db.ref('reviews/' + id).set({ ...review, name: o.name });
+  send(ADMIN_CHAT_ID, `⭐ <b>Yangi baho: ${n}/5</b> — #${id} (${esc(o.name)})${review.comment ? `\n💬 ${esc(review.comment)}` : ''}`).catch(() => {});
+  return review;
+}
+async function addComment(id, text) {
+  const o = (await db.ref('ordersPrivate/' + id).get()).val();
+  const comment = String(text).trim().slice(0, 500);
+  if (!o?.review || o.review.comment || !comment) return false;
+  await db.ref(`ordersPrivate/${id}/review/comment`).set(comment);
+  await db.ref(`reviews/${id}/comment`).set(comment);
+  send(ADMIN_CHAT_ID, `💬 <b>Izoh</b> — #${id} (${esc(o.name)}) ${o.review.rating}⭐:\n${esc(comment)}`).catch(() => {});
+  return lg(o.lang);
+}
+const reviewHits = new Map();
+app.post('/api/review', wrap(async (req, res) => {
+  const h = (reviewHits.get(req.ip) || []).filter((t) => Date.now() - t < 3600000);
+  if (h.length >= 20) return res.json({ status: 'error', message: "Juda ko'p urinish" });
+  reviewHits.set(req.ip, [...h, Date.now()]);
+  const { orderId, rating, comment } = req.body || {};
+  const rv = okId(String(orderId)) ? await addReview(String(orderId), rating, comment) : null;
+  res.json(rv ? { status: 'ok' } : { status: 'error', message: 'Baho qabul qilinmadi (buyurtma yetkazilmagan yoki allaqachon baholangan)' });
+}));
+app.get('/api/admin/reviews', adminAuth, wrap(async (_, res) => {
+  const all = Object.entries((await db.ref('reviews').get()).val() || {}).map(([id, v]) => ({ id, ...v })).sort((a, b) => b.createdAt - a.createdAt);
+  const avg = all.length ? Math.round((all.reduce((s, x) => s + x.rating, 0) / all.length) * 10) / 10 : 0;
+  res.json({ status: 'ok', count: all.length, avg, list: all.slice(0, 50) });
+}));
+
 app.listen(PORT, () => console.log('Server port', PORT));
 
 // ---------- Telegram bot (long polling) ----------
@@ -199,24 +305,25 @@ async function confirmOrder(o, chat, phone, from) {
   const upd = { status: 'pending', phone, chatId: chat, username: from.username || null, confirmedAt: Date.now() };
   Object.assign(o, upd);
   await db.ref('ordersPrivate/' + o.id).update(upd);
-  await db.ref(`orders/${o.id}/status`).set(STATUS.pending); // sayt shu yerdan real vaqtda yangilanadi
+  await setPublic(o.id, 'pending'); // sayt shu yerdan real vaqtda yangilanadi
   await db.ref('users/' + chat).set({ phone });
   await db.ref('pending/' + chat).remove();
-  await send(chat, `✅ <b>Buyurtma #${o.id} tasdiqlandi!</b>\n\n${payNote(o)}\n\nHolat saytda va shu yerda yangilanib turadi.`, { reply_markup: { remove_keyboard: true } });
+  await send(chat, B[lg(o.lang)].confirmed(o.id, payNote(o)), { reply_markup: { remove_keyboard: true } });
   await send(ADMIN_CHAT_ID, orderText(o), { reply_markup: keyboard(o) });
 }
 
 async function onStart(m, id) {
   const chat = m.chat.id;
   const o = (await db.ref('ordersPrivate/' + id).get()).val();
-  if (!o) return send(chat, '❌ Buyurtma topilmadi. Saytdan qaytadan buyurtma bering.');
-  if (o.status !== 'unconfirmed') return send(chat, `ℹ️ Buyurtma #${id} allaqachon tasdiqlangan.`);
-  if (Date.now() - o.createdAt > EXPIRE_MS) return send(chat, '⌛ Buyurtma muddati tugagan. Saytdan qaytadan buyurtma bering.');
+  if (!o) return send(chat, B[fromTg(m.from.language_code)].notFound);
+  const T = B[lg(o.lang)];
+  if (o.status !== 'unconfirmed') return send(chat, T.already(id));
+  if (Date.now() - o.createdAt > EXPIRE_MS) return send(chat, T.expired);
   const known = (await db.ref('users/' + chat).get()).val();
   if (known?.phone) return confirmOrder(o, chat, known.phone, m.from); // avval raqam ulagan mijoz — darhol tasdiqlanadi
   await db.ref('pending/' + chat).set(id);
-  return send(chat, `Buyurtma #${id} ni tasdiqlash uchun telefon raqamingizni ulashing 👇`, {
-    reply_markup: { keyboard: [[{ text: '📱 Raqamni ulashish', request_contact: true }]], resize_keyboard: true, one_time_keyboard: true },
+  return send(chat, T.askPhone(id), {
+    reply_markup: { keyboard: [[{ text: T.share, request_contact: true }]], resize_keyboard: true, one_time_keyboard: true },
   });
 }
 
@@ -226,22 +333,43 @@ async function onMessage(m) {
   if (m.text?.startsWith('/start')) {
     const id = m.text.split(' ')[1];
     if (id) return onStart(m, id.trim());
-    return send(chat, `Salom! Garden Food buyurtmasini tasdiqlash uchun saytdan buyurtma bering${FRONTEND_URL !== '*' ? `: ${FRONTEND_URL}` : ''}`);
+    return send(chat, B[fromTg(m.from.language_code)].hello + (FRONTEND_URL !== '*' ? `\n${FRONTEND_URL}` : ''));
   }
   if (m.contact) {
-    if (m.contact.user_id !== m.from.id) return send(chat, "Iltimos, faqat o'zingizning raqamingizni ulashing.");
+    if (m.contact.user_id !== m.from.id) return send(chat, B[fromTg(m.from.language_code)].ownNum);
     const phone = String(m.contact.phone_number).replace(/\D/g, '');
     const id = (await db.ref('pending/' + chat).get()).val();
     const o = id ? (await db.ref('ordersPrivate/' + id).get()).val() : null;
     if (!o || o.status !== 'unconfirmed') {
       await db.ref('users/' + chat).set({ phone });
-      return send(chat, 'Raqamingiz saqlandi. Buyurtmani saytdan bering.', { reply_markup: { remove_keyboard: true } });
+      return send(chat, B[o ? lg(o.lang) : fromTg(m.from.language_code)].saved, { reply_markup: { remove_keyboard: true } });
     }
     return confirmOrder(o, chat, phone, m.from);
+  }
+  if (m.text && !m.text.startsWith('/')) { // baholashdan keyin yozilgan izoh
+    const oid = (await db.ref('reviewPending/' + chat).get()).val();
+    const cl = oid ? await addComment(oid, m.text) : false;
+    if (cl) {
+      await db.ref('reviewPending/' + chat).remove();
+      return send(chat, B[cl].commentOk);
+    }
   }
 }
 
 async function onCallback(cb) {
+  if (cb.data?.startsWith('rate:')) { // mijoz botda yulduzcha bosdi
+    const [, oid, n] = cb.data.split(':');
+    const ord = (await db.ref('ordersPrivate/' + oid).get()).val();
+    if (!ord || String(ord.chatId) !== String(cb.message?.chat?.id)) return tg('answerCallbackQuery', { callback_query_id: cb.id });
+    const T = B[lg(ord.lang)];
+    const rv = await addReview(oid, n);
+    await tg('answerCallbackQuery', { callback_query_id: cb.id, text: rv ? T.thanks : T.already2 });
+    if (rv) {
+      await db.ref('reviewPending/' + cb.message.chat.id).set(oid);
+      await tg('editMessageText', { chat_id: cb.message.chat.id, message_id: cb.message.message_id, text: T.thanksRate(rv.rating) });
+    }
+    return;
+  }
   const [id, status] = (cb.data || '').split(':');
   const ref = db.ref('ordersPrivate/' + id);
   const o = (await ref.get()).val();
@@ -249,13 +377,15 @@ async function onCallback(cb) {
   if (!ok) return tg('answerCallbackQuery', { callback_query_id: cb.id, text: 'Amal mumkin emas' });
   o.status = status;
   await ref.update({ status });
-  await db.ref(`orders/${id}/status`).set(STATUS[status]);
+  await setPublic(id, status);
   await tg('answerCallbackQuery', { callback_query_id: cb.id, text: STATUS[status] });
   await tg('editMessageText', {
     chat_id: cb.message.chat.id, message_id: cb.message.message_id,
     text: orderText(o), parse_mode: 'HTML', reply_markup: keyboard(o),
   });
-  if (o.chatId) send(o.chatId, `🧾 Buyurtma #${id}: ${STATUS[status]}`).catch(() => {});
+  if (o.chatId) send(o.chatId, B[lg(o.lang)].status(id, SL[lg(o.lang)][status])).catch(() => {});
+  if (status === 'done' && o.chatId)
+    send(o.chatId, B[lg(o.lang)].rate, { reply_markup: { inline_keyboard: [[1, 2, 3, 4, 5].map((n) => ({ text: `${n}⭐`, callback_data: `rate:${id}:${n}` }))] } }).catch(() => {});
 }
 
 await tg('deleteWebhook', { drop_pending_updates: false });
