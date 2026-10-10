@@ -1,162 +1,372 @@
-[
- {
-  "name": "Lavash STANDART",
-  "price": 30000
- },
- {
-  "name": "Lavash qalampir",
-  "price": 32000
- },
- {
-  "name": "Lavash сырный",
-  "price": 32000
- },
- {
-  "name": "Lavash куриный",
-  "price": 30000
- },
- {
-  "name": "Lavash EXTRA",
-  "price": 36000
- },
- {
-  "name": "Pita",
-  "price": 32000
- },
- {
-  "name": "Pita куриная",
-  "price": 30000
- },
- {
-  "name": "Gamburger",
-  "price": 28000
- },
- {
-  "name": "Cheeseburger",
-  "price": 30000
- },
- {
-  "name": "Bigburger",
-  "price": 38000
- },
- {
-  "name": "BigDoubleCheese",
-  "price": 40000
- },
- {
-  "name": "Куриный Burger",
-  "price": 26000
- },
- {
-  "name": "Chicken Burger",
-  "price": 28000
- },
- {
-  "name": "Burger фирменный",
-  "price": 38000
- },
- {
-  "name": "Haggi",
-  "price": 25000
- },
- {
-  "name": "Baget",
-  "price": 32000
- },
- {
-  "name": "Sandwich",
-  "price": 35000
- },
- {
-  "name": "Tuxum+Kolbasa",
-  "price": 32000
- },
- {
-  "name": "Donar",
-  "price": 45000
- },
- {
-  "name": "Куриный Mix",
-  "price": 33000
- },
- {
-  "name": "NonKabob",
-  "price": 32000
- },
- {
-  "name": "Shaurma",
-  "price": 32000
- },
- {
-  "name": "Shashlik nonga",
-  "price": 32000
- },
- {
-  "name": "Мясной Mix",
-  "price": 35000
- },
- {
-  "name": "Kolbasali HotDog",
-  "price": 15000
- },
- {
-  "name": "Kolbasali HotDog 2X",
-  "price": 18000
- },
- {
-  "name": "HotDog лепешка",
-  "price": 16000
- },
- {
-  "name": "Classic HotDog 2X",
-  "price": 15000
- },
- {
-  "name": "Королевский HotDog 3X",
-  "price": 20000
- },
- {
-  "name": "Королевский HotDog 4X",
-  "price": 22000
- },
- {
-  "name": "Qazili HotDog Mini",
-  "price": 25000
- },
- {
-  "name": "Qazili HotDog Big",
-  "price": 32000
- },
- {
-  "name": "Фирменный HotDog Mini",
-  "price": 26000
- },
- {
-  "name": "Фирменный HotDog Big",
-  "price": 35000
- },
- {
-  "name": "Шашлычный HotDog Mini",
-  "price": 24000
- },
- {
-  "name": "Шашлычный HotDog Big",
-  "price": 32000
- },
- {
-  "name": "Kartoshka fri",
-  "price": 16000
- },
- {
-  "name": "Kartoshkа по деревенские",
-  "price": 20000
- },
- {
-  "name": "Куриные шарики 12 ta",
-  "price": 18000
- },
- {
-  "name": "Nuggets 250gramm",
-  "price": 30000
- }
-]
+{
+ "categories": [
+  "Lavash & Pita",
+  "Burgerlar",
+  "Sandwich & Baget",
+  "Shaurma & Donar",
+  "HotDoglar",
+  "Snek & Garnirlar"
+ ],
+ "items": [
+  {
+   "id": "lavash-standart",
+   "name": "Lavash STANDART",
+   "price": 30000,
+   "category": "Lavash & Pita",
+   "img": "images/lavash-standart.jpg",
+   "available": true,
+   "sort": 0
+  },
+  {
+   "id": "lavash-qalampir",
+   "name": "Lavash qalampir",
+   "price": 32000,
+   "category": "Lavash & Pita",
+   "img": "images/lavash-qalampir.jpg",
+   "available": true,
+   "sort": 1
+  },
+  {
+   "id": "lavash-syrnyy",
+   "name": "Lavash сырный",
+   "price": 32000,
+   "category": "Lavash & Pita",
+   "img": "images/lavash-syrnyy.jpg",
+   "available": true,
+   "sort": 2
+  },
+  {
+   "id": "lavash-kurinyy",
+   "name": "Lavash куриный",
+   "price": 30000,
+   "category": "Lavash & Pita",
+   "img": "images/lavash-kurinyy.jpg",
+   "available": true,
+   "sort": 3
+  },
+  {
+   "id": "lavash-extra",
+   "name": "Lavash EXTRA",
+   "price": 36000,
+   "category": "Lavash & Pita",
+   "img": "images/lavash-extra.jpg",
+   "available": true,
+   "sort": 4
+  },
+  {
+   "id": "pita",
+   "name": "Pita",
+   "price": 32000,
+   "category": "Lavash & Pita",
+   "img": "images/pita.jpg",
+   "available": true,
+   "sort": 5
+  },
+  {
+   "id": "pita-kurinaya",
+   "name": "Pita куриная",
+   "price": 30000,
+   "category": "Lavash & Pita",
+   "img": "images/pita-kurinaya.jpg",
+   "available": true,
+   "sort": 6
+  },
+  {
+   "id": "gamburger",
+   "name": "Gamburger",
+   "price": 28000,
+   "category": "Burgerlar",
+   "img": "images/gamburger.jpg",
+   "available": true,
+   "sort": 7
+  },
+  {
+   "id": "cheeseburger",
+   "name": "Cheeseburger",
+   "price": 30000,
+   "category": "Burgerlar",
+   "img": "images/cheeseburger.jpg",
+   "available": true,
+   "sort": 8
+  },
+  {
+   "id": "bigburger",
+   "name": "Bigburger",
+   "price": 38000,
+   "category": "Burgerlar",
+   "img": "images/bigburger.jpg",
+   "available": true,
+   "sort": 9
+  },
+  {
+   "id": "bigdoublecheese",
+   "name": "BigDoubleCheese",
+   "price": 40000,
+   "category": "Burgerlar",
+   "img": "images/bigdoublecheese.jpg",
+   "available": true,
+   "sort": 10
+  },
+  {
+   "id": "kurinyy-burger",
+   "name": "Куриный Burger",
+   "price": 26000,
+   "category": "Burgerlar",
+   "img": "images/kurinyy-burger.jpg",
+   "available": true,
+   "sort": 11
+  },
+  {
+   "id": "chicken-burger",
+   "name": "Chicken Burger",
+   "price": 28000,
+   "category": "Burgerlar",
+   "img": "images/chicken-burger.jpg",
+   "available": true,
+   "sort": 12
+  },
+  {
+   "id": "burger-firmennyy",
+   "name": "Burger фирменный",
+   "price": 38000,
+   "category": "Burgerlar",
+   "img": "images/burger-firmennyy.jpg",
+   "available": true,
+   "sort": 13
+  },
+  {
+   "id": "haggi",
+   "name": "Haggi",
+   "price": 25000,
+   "category": "Sandwich & Baget",
+   "img": "images/haggi.jpg",
+   "available": true,
+   "sort": 14
+  },
+  {
+   "id": "baget",
+   "name": "Baget",
+   "price": 32000,
+   "category": "Sandwich & Baget",
+   "img": "images/baget.jpg",
+   "available": true,
+   "sort": 15
+  },
+  {
+   "id": "sandwich",
+   "name": "Sandwich",
+   "price": 35000,
+   "category": "Sandwich & Baget",
+   "img": "images/sandwich.jpg",
+   "available": true,
+   "sort": 16
+  },
+  {
+   "id": "tuxum-kolbasa",
+   "name": "Tuxum+Kolbasa",
+   "price": 32000,
+   "category": "Sandwich & Baget",
+   "img": "images/tuxum-kolbasa.jpg",
+   "available": true,
+   "sort": 17
+  },
+  {
+   "id": "donar",
+   "name": "Donar",
+   "price": 45000,
+   "category": "Shaurma & Donar",
+   "img": "images/donar.jpg",
+   "available": true,
+   "sort": 18
+  },
+  {
+   "id": "kurinyy-mix",
+   "name": "Куриный Mix",
+   "price": 33000,
+   "category": "Shaurma & Donar",
+   "img": "images/kurinyy-mix.jpg",
+   "available": true,
+   "sort": 19
+  },
+  {
+   "id": "nonkabob",
+   "name": "NonKabob",
+   "price": 32000,
+   "category": "Shaurma & Donar",
+   "img": "images/nonkabob.jpg",
+   "available": true,
+   "sort": 20
+  },
+  {
+   "id": "shaurma",
+   "name": "Shaurma",
+   "price": 32000,
+   "category": "Shaurma & Donar",
+   "img": "images/shaurma.jpg",
+   "available": true,
+   "sort": 21
+  },
+  {
+   "id": "shashlik-nonga",
+   "name": "Shashlik nonga",
+   "price": 32000,
+   "category": "Shaurma & Donar",
+   "img": "images/shashlik-nonga.jpg",
+   "available": true,
+   "sort": 22
+  },
+  {
+   "id": "myasnoy-mix",
+   "name": "Мясной Mix",
+   "price": 35000,
+   "category": "Shaurma & Donar",
+   "img": "images/myasnoy-mix.jpg",
+   "available": true,
+   "sort": 23
+  },
+  {
+   "id": "kolbasali-hotdog",
+   "name": "Kolbasali HotDog",
+   "price": 15000,
+   "category": "HotDoglar",
+   "img": "images/kolbasali-hotdog.jpg",
+   "available": true,
+   "sort": 24
+  },
+  {
+   "id": "kolbasali-hotdog-2x",
+   "name": "Kolbasali HotDog 2X",
+   "price": 18000,
+   "category": "HotDoglar",
+   "img": "images/kolbasali-hotdog-2x.jpg",
+   "available": true,
+   "sort": 25
+  },
+  {
+   "id": "hotdog-lepeshka",
+   "name": "HotDog лепешка",
+   "price": 16000,
+   "category": "HotDoglar",
+   "img": "images/hotdog-lepeshka.jpg",
+   "available": true,
+   "sort": 26
+  },
+  {
+   "id": "classic-hotdog-2x",
+   "name": "Classic HotDog 2X",
+   "price": 15000,
+   "category": "HotDoglar",
+   "img": "images/classic-hotdog-2x.jpg",
+   "available": true,
+   "sort": 27
+  },
+  {
+   "id": "korolevskiy-hotdog-3x",
+   "name": "Королевский HotDog 3X",
+   "price": 20000,
+   "category": "HotDoglar",
+   "img": "images/korolevskiy-hotdog-3x.jpg",
+   "available": true,
+   "sort": 28
+  },
+  {
+   "id": "korolevskiy-hotdog-4x",
+   "name": "Королевский HotDog 4X",
+   "price": 22000,
+   "category": "HotDoglar",
+   "img": "images/korolevskiy-hotdog-4x.jpg",
+   "available": true,
+   "sort": 29
+  },
+  {
+   "id": "qazili-hotdog-mini",
+   "name": "Qazili HotDog Mini",
+   "price": 25000,
+   "category": "HotDoglar",
+   "img": "images/qazili-hotdog-mini.jpg",
+   "available": true,
+   "sort": 30
+  },
+  {
+   "id": "qazili-hotdog-big",
+   "name": "Qazili HotDog Big",
+   "price": 32000,
+   "category": "HotDoglar",
+   "img": "images/qazili-hotdog-big.jpg",
+   "available": true,
+   "sort": 31
+  },
+  {
+   "id": "firmennyy-hotdog-mini",
+   "name": "Фирменный HotDog Mini",
+   "price": 26000,
+   "category": "HotDoglar",
+   "img": "images/firmennyy-hotdog-mini.jpg",
+   "available": true,
+   "sort": 32
+  },
+  {
+   "id": "firmennyy-hotdog-big",
+   "name": "Фирменный HotDog Big",
+   "price": 35000,
+   "category": "HotDoglar",
+   "img": "images/firmennyy-hotdog-big.jpg",
+   "available": true,
+   "sort": 33
+  },
+  {
+   "id": "shashlychnyy-hotdog-mini",
+   "name": "Шашлычный HotDog Mini",
+   "price": 24000,
+   "category": "HotDoglar",
+   "img": "images/shashlychnyy-hotdog-mini.jpg",
+   "available": true,
+   "sort": 34
+  },
+  {
+   "id": "shashlychnyy-hotdog-big",
+   "name": "Шашлычный HotDog Big",
+   "price": 32000,
+   "category": "HotDoglar",
+   "img": "images/shashlychnyy-hotdog-big.jpg",
+   "available": true,
+   "sort": 35
+  },
+  {
+   "id": "kartoshka-fri",
+   "name": "Kartoshka fri",
+   "price": 16000,
+   "category": "Snek & Garnirlar",
+   "img": "images/kartoshka-fri.jpg",
+   "available": true,
+   "sort": 36
+  },
+  {
+   "id": "kartoshka-po-derevenskie",
+   "name": "Kartoshkа по деревенские",
+   "price": 20000,
+   "category": "Snek & Garnirlar",
+   "img": "images/kartoshka-po-derevenskie.jpg",
+   "available": true,
+   "sort": 37
+  },
+  {
+   "id": "kurinye-shariki-12-ta",
+   "name": "Куриные шарики 12 ta",
+   "price": 18000,
+   "category": "Snek & Garnirlar",
+   "img": "images/kurinye-shariki-12-ta.jpg",
+   "available": true,
+   "sort": 38
+  },
+  {
+   "id": "nuggets-250gramm",
+   "name": "Nuggets 250gramm",
+   "price": 30000,
+   "category": "Snek & Garnirlar",
+   "img": "images/nuggets-250gramm.jpg",
+   "available": true,
+   "sort": 39
+  }
+ ]
+}

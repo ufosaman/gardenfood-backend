@@ -5,13 +5,13 @@ import fs from 'fs';
 import admin from 'firebase-admin';
 
 const {
-  BOT_TOKEN, ADMIN_CHAT_ID, FIREBASE_SERVICE_ACCOUNT, BOT_USERNAME,
+  BOT_TOKEN, ADMIN_CHAT_ID, FIREBASE_SERVICE_ACCOUNT, BOT_USERNAME, ADMIN_PASSWORD, TOKEN_SECRET,
   FRONTEND_URL = '*', PORT = 3000,
   FIREBASE_DB_URL = 'https://gardenfoodsam-default-rtdb.firebaseio.com',
   CARD_NUMBER = '', CARD_OWNER = '', RECEIPT_TG = '',
 } = process.env;
-if (!BOT_TOKEN || !ADMIN_CHAT_ID || !FIREBASE_SERVICE_ACCOUNT || !BOT_USERNAME) {
-  console.error('BOT_TOKEN, ADMIN_CHAT_ID, BOT_USERNAME, FIREBASE_SERVICE_ACCOUNT kerak!');
+if (!BOT_TOKEN || !ADMIN_CHAT_ID || !FIREBASE_SERVICE_ACCOUNT || !BOT_USERNAME || !ADMIN_PASSWORD || !TOKEN_SECRET) {
+  console.error('BOT_TOKEN, ADMIN_CHAT_ID, BOT_USERNAME, FIREBASE_SERVICE_ACCOUNT, ADMIN_PASSWORD, TOKEN_SECRET kerak!');
   process.exit(1);
 }
 
@@ -36,7 +36,16 @@ const NEXT = {
 };
 const EXPIRE_MS = 30 * 60 * 1000;
 
-const PRICES = Object.fromEntries(JSON.parse(fs.readFileSync('./menu.json', 'utf8')).map((m) => [m.name, m.price]));
+const SEED = JSON.parse(fs.readFileSync('./menu.json', 'utf8')); // { categories, items } — boshlang'ich menyu
+let LIVE = {};                                                    // Firebase'dagi joriy menyu (admin o'zgartirsa darhol yangilanadi)
+db.ref('menu/items').on('value', (s) => { LIVE = s.val() || {}; });
+const findItem = (i) => {
+  if (Object.keys(LIVE).length) {
+    const it = LIVE[i.id] || Object.values(LIVE).find((v) => v.name === i.name);
+    return it && it.available !== false ? it : null;
+  }
+  return SEED.items.find((m) => m.id === i.id || m.name === i.name) || null; // menyu hali bazaga ko'chirilmagan
+};
 const TG = `https://api.telegram.org/bot${BOT_TOKEN}`;
 const tg = (method, body) =>
   fetch(`${TG}/${method}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then((r) => r.json());
@@ -76,8 +85,11 @@ app.post('/api/order', async (req, res) => {
     if (!name?.trim() || !address?.trim() || !Array.isArray(items)) return res.json({ status: 'error', message: "Ma'lumotlar to'liq emas" });
 
     const lines = items
-      .map((i) => ({ name: String(i.name), qty: Math.min(Math.max(parseInt(i.qty) || 0, 0), 50), price: PRICES[i.name] }))
-      .filter((i) => i.price && i.qty);
+      .map((i) => {
+        const it = findItem(i);
+        return it && { name: it.name, qty: Math.min(Math.max(parseInt(i.qty) || 0, 0), 50), price: Number(it.price) };
+      })
+      .filter((i) => i && i.price > 0 && i.qty);
     if (!lines.length) return res.json({ status: 'error', message: "Savatcha bo'sh" });
 
     const id = 'GF-' + crypto.randomBytes(3).toString('hex').toUpperCase();
@@ -97,6 +109,88 @@ app.post('/api/order', async (req, res) => {
     res.status(500).json({ status: 'error', message: 'Server xatosi' });
   }
 });
+
+// ---------- Admin API (menyu boshqaruvi) ----------
+const hmac = (s) => crypto.createHmac('sha256', TOKEN_SECRET).update(s).digest('hex');
+const same = (a, b) => a.length === b.length && crypto.timingSafeEqual(Buffer.from(a), Buffer.from(b));
+const adminAuth = (req, res, next) => {
+  const [exp, sig] = (req.headers.authorization || '').replace('Bearer ', '').split('.');
+  if (!exp || !sig || Number(exp) < Date.now() || !same(sig, hmac('admin.' + exp))) return res.status(401).json({ status: 'error', message: "Ruxsat yo'q" });
+  next();
+};
+const wrap = (fn) => (req, res) => fn(req, res).catch((e) => { console.error(e); res.status(500).json({ status: 'error', message: 'Server xatosi' }); });
+const BAD = { status: 'error', message: "Ma'lumotlar noto'g'ri" };
+const okId = (id) => /^[A-Za-z0-9_-]{1,60}$/.test(id);
+
+const loginTries = new Map();
+app.post('/api/admin/login', (req, res) => {
+  const t = (loginTries.get(req.ip) || []).filter((x) => Date.now() - x < 900000);
+  if (t.length >= 5) return res.status(429).json({ status: 'error', message: "Juda ko'p urinish, 15 daqiqadan keyin urinib ko'ring" });
+  if (!same(hmac('pw.' + String(req.body?.password || '')), hmac('pw.' + ADMIN_PASSWORD))) {
+    loginTries.set(req.ip, [...t, Date.now()]);
+    return res.json({ status: 'error', message: "Parol noto'g'ri" });
+  }
+  const exp = Date.now() + 12 * 3600e3;
+  res.json({ status: 'ok', token: `${exp}.${hmac('admin.' + exp)}` });
+});
+
+const cleanItem = (b = {}) => {
+  const price = Math.round(Number(b.price));
+  if (!String(b.name || '').trim() || !(price >= 0) || price > 10000000 || !String(b.category || '').trim()) return null;
+  return {
+    name: String(b.name).trim().slice(0, 60), price, category: String(b.category).trim().slice(0, 40),
+    img: String(b.img || '').trim().slice(0, 300), available: b.available !== false,
+    sort: Number.isFinite(+b.sort) && b.sort !== undefined ? +b.sort : Date.now(),
+  };
+};
+async function ensureCat(cat) {
+  const ref = db.ref('menu/categories');
+  const cur = (await ref.get()).val() || [];
+  if (!cur.includes(cat)) await ref.set([...cur, cat]);
+}
+
+app.get('/api/admin/menu', adminAuth, wrap(async (_, res) => res.json({ status: 'ok', menu: (await db.ref('menu').get()).val() || {} })));
+
+app.post('/api/admin/item', adminAuth, wrap(async (req, res) => {
+  const it = cleanItem(req.body);
+  if (!it) return res.json(BAD);
+  const id = crypto.randomBytes(4).toString('hex');
+  await db.ref('menu/items/' + id).set(it);
+  await ensureCat(it.category);
+  res.json({ status: 'ok', id });
+}));
+
+app.put('/api/admin/item/:id', adminAuth, wrap(async (req, res) => {
+  const it = cleanItem(req.body);
+  if (!it || !okId(req.params.id)) return res.json(BAD);
+  const ref = db.ref('menu/items/' + req.params.id);
+  const cur = (await ref.get()).val();
+  if (!cur) return res.json({ status: 'error', message: 'Taom topilmadi' });
+  if (req.body.sort === undefined) it.sort = cur.sort ?? it.sort; // tartib o'zgarmasligi uchun
+  await ref.set(it);
+  await ensureCat(it.category);
+  res.json({ status: 'ok' });
+}));
+
+app.delete('/api/admin/item/:id', adminAuth, wrap(async (req, res) => {
+  if (!okId(req.params.id)) return res.json(BAD);
+  await db.ref('menu/items/' + req.params.id).remove();
+  res.json({ status: 'ok' });
+}));
+
+app.put('/api/admin/categories', adminAuth, wrap(async (req, res) => {
+  const c = [...new Set((req.body?.categories || []).map((x) => String(x).trim().slice(0, 40)).filter(Boolean))].slice(0, 30);
+  if (!c.length) return res.json(BAD);
+  await db.ref('menu/categories').set(c);
+  res.json({ status: 'ok' });
+}));
+
+app.post('/api/admin/seed', adminAuth, wrap(async (req, res) => {
+  const cur = (await db.ref('menu/items').get()).val();
+  if (cur && Object.keys(cur).length && !req.body?.force) return res.json({ status: 'error', message: 'Menyu allaqachon yuklangan' });
+  await db.ref('menu').set({ categories: SEED.categories, items: Object.fromEntries(SEED.items.map(({ id, ...v }) => [id, v])) });
+  res.json({ status: 'ok' });
+}));
 
 app.listen(PORT, () => console.log('Server port', PORT));
 
