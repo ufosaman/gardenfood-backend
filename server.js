@@ -227,13 +227,11 @@ app.post('/api/review', async (req, res) => {
     const ordRef = db.ref('ordersPrivate/' + orderId);
     const ord = (await ordRef.get()).val();
 
-    // Bazaga saqlash
     await ordRef.update({ rating, comment: comment || '' });
     if (db.ref('orders/' + orderId)) {
       await db.ref('orders/' + orderId).update({ rating, comment: comment || '' });
     }
 
-    // Admin guruhiga yuborish
     const clientName = ord ? esc(ord.name) : 'Mijoz';
     const clientPhone = ord && ord.phone ? `+${esc(ord.phone)}` : 'Nomaʼlum';
     const starsText = '⭐'.repeat(Number(rating) || 5);
@@ -247,6 +245,124 @@ app.post('/api/review', async (req, res) => {
     res.json({ status: 'ok' });
   } catch (e) {
     console.error(e);
+    res.status(500).json({ status: 'error', message: 'Server xatosi' });
+  }
+});
+
+// ---------- ADMIN API (Admin panel uchun) ----------
+const hmac = (s) => crypto.createHmac('sha256', TOKEN_SECRET).update(s).digest('hex');
+const same = (a, b) => a.length === b.length && crypto.timingSafeEqual(Buffer.from(a), Buffer.from(b));
+
+const adminAuth = (req, res, next) => {
+  const [exp, sig] = (req.headers.authorization || '').replace('Bearer ', '').split('.');
+  if (!exp || !sig || Number(exp) < Date.now() || !same(sig, hmac('admin.' + exp))) {
+    return res.status(401).json({ status: 'error', message: "Ruxsat yo'q" });
+  }
+  next();
+};
+
+app.post('/api/admin/login', (req, res) => {
+  const { password } = req.body || {};
+  if (password !== ADMIN_PASSWORD) {
+    return res.json({ status: 'error', message: "Parol noto'g'ri" });
+  }
+  const exp = Date.now() + 86400000; // 1 kun
+  const sig = hmac('admin.' + exp);
+  res.json({ status: 'ok', token: `${exp}.${sig}` });
+});
+
+app.get('/api/admin/menu', adminAuth, async (req, res) => {
+  try {
+    const snap = (await db.ref('menu').get()).val() || { categories: Object.keys(MENU), items: {} };
+    res.json({ status: 'ok', menu: snap });
+  } catch (e) {
+    res.status(500).json({ status: 'error', message: 'Server xatosi' });
+  }
+});
+
+app.put('/api/admin/categories', adminAuth, async (req, res) => {
+  try {
+    const categories = (req.body.categories || []).map(c => c.trim()).filter(Boolean);
+    await db.ref('menu/categories').set(categories);
+    res.json({ status: 'ok' });
+  } catch (e) {
+    res.status(500).json({ status: 'error', message: 'Server xatosi' });
+  }
+});
+
+app.get('/api/admin/reviews', adminAuth, async (req, res) => {
+  try {
+    const snap = (await db.ref('ordersPrivate').get()).val() || {};
+    const list = Object.values(snap)
+      .filter(o => o.rating)
+      .map(o => ({ id: o.id, name: o.name, rating: o.rating, comment: o.comment, createdAt: o.createdAt || Date.now() }))
+      .sort((a, b) => b.createdAt - a.createdAt);
+    
+    const count = list.length;
+    const avg = count ? (list.reduce((s, r) => s + r.rating, 0) / count).toFixed(1) : 0;
+    res.json({ status: 'ok', list, count, avg });
+  } catch (e) {
+    res.status(500).json({ status: 'error', message: 'Server xatosi' });
+  }
+});
+
+app.post('/api/admin/seed', adminAuth, async (req, res) => {
+  try {
+    const builtinItems = Object.entries(MENU).flatMap(([cat, c]) => 
+      c.list.map((it, n) => ({ 
+        id: it.img.replace(/^images\//, "").replace(/\.jpg$/, ""), 
+        category: cat, 
+        name: it.name, 
+        price: it.price, 
+        img: it.img, 
+        sort: n, 
+        available: true 
+      }))
+    );
+    const itemsObj = Object.fromEntries(builtinItems.map(i => [i.id, i]));
+    const cats = Object.keys(MENU);
+    await db.ref('menu').set({ categories: cats, items: itemsObj });
+    res.json({ status: 'ok' });
+  } catch (e) {
+    res.status(500).json({ status: 'error', message: 'Server xatosi' });
+  }
+});
+
+app.post('/api/admin/item', adminAuth, async (req, res) => {
+  try {
+    const { name, price, category, img, available } = req.body || {};
+    if (!name || !price) return res.json({ status: 'error', message: "Ma'lumotlar yetarli emas" });
+    const id = 'it-' + crypto.randomBytes(3).toString('hex');
+    const item = { name: name.trim(), price: Number(price), category: category || 'Asosiy', img: img || '', available: available !== false };
+    await db.ref('menu/items/' + id).set(item);
+    res.json({ status: 'ok' });
+  } catch (e) {
+    res.status(500).json({ status: 'error', message: 'Server xatosi' });
+  }
+});
+
+app.put('/api/admin/item/:id', adminAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, price, category, img, available } = req.body || {};
+    await db.ref('menu/items/' + id).update({ 
+      name: name.trim(), 
+      price: Number(price), 
+      category, 
+      img: img || '', 
+      available: available !== false 
+    });
+    res.json({ status: 'ok' });
+  } catch (e) {
+    res.status(500).json({ status: 'error', message: 'Server xatosi' });
+  }
+});
+
+app.delete('/api/admin/item/:id', adminAuth, async (req, res) => {
+  try {
+    await db.ref('menu/items/' + req.params.id).remove();
+    res.json({ status: 'ok' });
+  } catch (e) {
     res.status(500).json({ status: 'error', message: 'Server xatosi' });
   }
 });
@@ -418,20 +534,17 @@ async function onMessage(m) {
     return finalizeOrderProcess(chat);
   }
 
-  // Telegram bot orqali baholashdan keyin yuborilgan izohni qabul qilish va guruhga jo'natish
   if (m.text && !m.text.startsWith('/')) {
     const oid = (await db.ref('reviewPending/' + chat).get()).val();
     if (oid) {
       await db.ref('reviewPending/' + chat).remove();
       const ord = (await db.ref('ordersPrivate/' + oid).get()).val();
 
-      // Izohni bazaga saqlash
       await db.ref('ordersPrivate/' + oid).update({ comment: m.text.trim() });
       if (db.ref('orders/' + oid)) {
         await db.ref('orders/' + oid).update({ comment: m.text.trim() });
       }
 
-      // Admin guruhiga matnli izohni yuborish
       const clientName = ord ? esc(ord.name) : 'Mijoz';
       const clientPhone = ord && ord.phone ? `+${esc(ord.phone)}` : 'Nomaʼlum';
       const userRating = ord && ord.rating ? `${'⭐'.repeat(ord.rating)} (${ord.rating}/5)` : 'Baho berilmagan';
@@ -549,14 +662,12 @@ async function onCallback(cb) {
     return finalizeOrderProcess(chat);
   }
 
-  // Telegram botda yulduzcha (1-5) bosilganda bahoni saqlash va guruhga jo'natish
   if (cb.data?.startsWith('rate:')) {
     const [, oid, n] = cb.data.split(':');
     const ordRef = db.ref('ordersPrivate/' + oid);
     const ord = (await ordRef.get()).val();
     if (!ord || String(ord.chatId) !== String(chat)) return tg('answerCallbackQuery', { callback_query_id: cb.id });
 
-    // Bahoni bazaga yozish
     await ordRef.update({ rating: Number(n) });
     if (db.ref('orders/' + oid)) {
       await db.ref('orders/' + oid).update({ rating: Number(n) });
@@ -566,7 +677,6 @@ async function onCallback(cb) {
     await db.ref('reviewPending/' + chat).set(oid);
     await tg('editMessageText', { chat_id: chat, message_id: cb.message.message_id, text: T.thanksRate(n) });
 
-    // Admin guruhiga darhol bahoni yuborish
     const clientName = esc(ord.name || 'Mijoz');
     const clientPhone = ord.phone ? `+${esc(ord.phone)}` : 'Nomaʼlum';
     const starsText = '⭐'.repeat(Number(n));
