@@ -33,9 +33,7 @@ const NEXT = {
   preparing: ['delivering'],
   delivering: ['done'],
 };
-const EXPIRE_MS = 30 * 60 * 1000;
 
-// ---------- Tillar ----------
 const LANGS = ['uz', 'ru', 'en', 'hi'];
 const lg = (x) => (LANGS.includes(x) ? x : 'uz');
 const SL = {
@@ -220,18 +218,40 @@ app.post('/api/order', async (req, res) => {
   }
 });
 
-// ---------- Admin API ----------
-const hmac = (s) => crypto.createHmac('sha256', TOKEN_SECRET).update(s).digest('hex');
-const same = (a, b) => a.length === b.length && crypto.timingSafeEqual(Buffer.from(a), Buffer.from(b));
-const adminAuth = (req, res, next) => {
-  const [exp, sig] = (req.headers.authorization || '').replace('Bearer ', '').split('.');
-  if (!exp || !sig || Number(exp) < Date.now() || !same(sig, hmac('admin.' + exp))) return res.status(401).json({ status: 'error', message: "Ruxsat yo'q" });
-  next();
-};
+// Saytdan yuborilgan baholarni qabul qiluvchi API
+app.post('/api/review', async (req, res) => {
+  try {
+    const { orderId, rating, comment } = req.body || {};
+    if (!orderId || !rating) return res.json({ status: 'error', message: "Ma'lumot yetarli emas" });
 
-// ==========================================
-// ---------- TELEGRAM BOT (GIBRID) ---------
-// ==========================================
+    const ordRef = db.ref('ordersPrivate/' + orderId);
+    const ord = (await ordRef.get()).val();
+
+    // Bazaga saqlash
+    await ordRef.update({ rating, comment: comment || '' });
+    if (db.ref('orders/' + orderId)) {
+      await db.ref('orders/' + orderId).update({ rating, comment: comment || '' });
+    }
+
+    // Admin guruhiga yuborish
+    const clientName = ord ? esc(ord.name) : 'Mijoz';
+    const clientPhone = ord && ord.phone ? `+${esc(ord.phone)}` : 'Nomaʼlum';
+    const starsText = '⭐'.repeat(Number(rating) || 5);
+    
+    let msg = `⭐ <b>Yangi baho va izoh!</b>\n\n🧾 Buyurtma: #${orderId}\n👤 Mijoz: ${clientName}\n📞 Tel: ${clientPhone}\n<b>Baho:</b> ${starsText} (${rating}/5)`;
+    if (comment) {
+      msg += `\n💬 <b>Izoh:</b> ${esc(comment)}`;
+    }
+    await send(ADMIN_CHAT_ID, msg);
+
+    res.json({ status: 'ok' });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ status: 'error', message: 'Server xatosi' });
+  }
+});
+
+// ---------- TELEGRAM BOT ----------
 const botSessions = {}; 
 
 async function confirmOrderFromWeb(o, chat, phone, from) {
@@ -255,7 +275,13 @@ async function onStart(m, orderId) {
       [{ text: "🇬🇧 English", callback_data: "lang:en" }, { text: "🇮🇳 हिन्दी", callback_data: "lang:hi" }]
     ]
   };
-  await send(chat, B.uz.chooseLang, { reply_markup: langMarkup });
+
+  await send(chat, B.uz.chooseLang, { 
+    reply_markup: { 
+      ...langMarkup,
+      remove_keyboard: true 
+    } 
+  });
 }
 
 async function askPhoneStep(chat) {
@@ -290,7 +316,12 @@ async function showCategories(chat) {
   }
   inlineKeyboard.push([{ text: "🛒 Savatchani ko'rish", callback_data: "view_cart" }]);
 
-  await send(chat, T.categoriesTitle, { reply_markup: { inline_keyboard: inlineKeyboard, remove_keyboard: true } });
+  await send(chat, T.categoriesTitle, { 
+    reply_markup: { 
+      inline_keyboard: inlineKeyboard, 
+      remove_keyboard: true 
+    } 
+  });
 }
 
 async function showCategoryItems(chat, categoryName) {
@@ -347,7 +378,6 @@ async function onMessage(m) {
   const session = botSessions[chat] || { lang: 'uz', cart: {} };
   const T = B[session.lang];
 
-  // /start yoki "🛍 Qaytadan buyurtma berish" tugmasi bosilganda boshidan boshlash
   if (m.text?.startsWith('/start') || m.text === "🛍 Qaytadan buyurtma berish") {
     const parts = m.text.split(' ');
     const id = parts[1] ? parts[1].trim() : null;
@@ -388,13 +418,28 @@ async function onMessage(m) {
     return finalizeOrderProcess(chat);
   }
 
+  // Telegram bot orqali baholashdan keyin yuborilgan izohni qabul qilish va guruhga jo'natish
   if (m.text && !m.text.startsWith('/')) {
     const oid = (await db.ref('reviewPending/' + chat).get()).val();
     if (oid) {
-      const cl = await addComment(oid, m.text);
       await db.ref('reviewPending/' + chat).remove();
-      botSessions[chat] = { lang: cl || 'uz', cart: {} };
-      await send(chat, B[cl || 'uz'].commentOk, {
+      const ord = (await db.ref('ordersPrivate/' + oid).get()).val();
+
+      // Izohni bazaga saqlash
+      await db.ref('ordersPrivate/' + oid).update({ comment: m.text.trim() });
+      if (db.ref('orders/' + oid)) {
+        await db.ref('orders/' + oid).update({ comment: m.text.trim() });
+      }
+
+      // Admin guruhiga matnli izohni yuborish
+      const clientName = ord ? esc(ord.name) : 'Mijoz';
+      const clientPhone = ord && ord.phone ? `+${esc(ord.phone)}` : 'Nomaʼlum';
+      const userRating = ord && ord.rating ? `${'⭐'.repeat(ord.rating)} (${ord.rating}/5)` : 'Baho berilmagan';
+
+      await send(ADMIN_CHAT_ID, `💬 <b>Mijozdan yangi izoh!</b>\n\n🧾 Buyurtma: #${oid}\n👤 Mijoz: ${clientName}\n📞 Tel: ${clientPhone}\nBaho: ${userRating}\n\n<b>Izoh matni:</b> ${esc(m.text.trim())}`);
+
+      botSessions[chat] = { lang: ord?.lang || 'uz', cart: {} };
+      await send(chat, T.commentOk, {
         reply_markup: {
           keyboard: [[{ text: "🛍 Qaytadan buyurtma berish" }]],
           resize_keyboard: true,
@@ -504,25 +549,37 @@ async function onCallback(cb) {
     return finalizeOrderProcess(chat);
   }
 
+  // Telegram botda yulduzcha (1-5) bosilganda bahoni saqlash va guruhga jo'natish
   if (cb.data?.startsWith('rate:')) {
     const [, oid, n] = cb.data.split(':');
-    const ord = (await db.ref('ordersPrivate/' + oid).get()).val();
+    const ordRef = db.ref('ordersPrivate/' + oid);
+    const ord = (await ordRef.get()).val();
     if (!ord || String(ord.chatId) !== String(chat)) return tg('answerCallbackQuery', { callback_query_id: cb.id });
-    const rv = await addReview(oid, n);
-    await tg('answerCallbackQuery', { callback_query_id: cb.id, text: rv ? T.thanks : T.already2 });
-    if (rv) {
-      await db.ref('reviewPending/' + chat).set(oid);
-      await tg('editMessageText', { chat_id: chat, message_id: cb.message.message_id, text: T.thanksRate(rv.rating) });
-      
-      // Baholangandan so'ng pastda "Qaytadan buyurtma berish" tugmasini chiqarish
-      await send(chat, "Xizmatingiz uchun rahmat!", {
-        reply_markup: {
-          keyboard: [[{ text: "🛍 Qaytadan buyurtma berish" }]],
-          resize_keyboard: true,
-          one_time_keyboard: false
-        }
-      });
+
+    // Bahoni bazaga yozish
+    await ordRef.update({ rating: Number(n) });
+    if (db.ref('orders/' + oid)) {
+      await db.ref('orders/' + oid).update({ rating: Number(n) });
     }
+
+    await tg('answerCallbackQuery', { callback_query_id: cb.id, text: T.thanks });
+    await db.ref('reviewPending/' + chat).set(oid);
+    await tg('editMessageText', { chat_id: chat, message_id: cb.message.message_id, text: T.thanksRate(n) });
+
+    // Admin guruhiga darhol bahoni yuborish
+    const clientName = esc(ord.name || 'Mijoz');
+    const clientPhone = ord.phone ? `+${esc(ord.phone)}` : 'Nomaʼlum';
+    const starsText = '⭐'.repeat(Number(n));
+    
+    await send(ADMIN_CHAT_ID, `⭐ <b>Mijozdan yangi baho!</b>\n\n🧾 Buyurtma: #${oid}\n👤 Mijoz: ${clientName}\n📞 Tel: ${clientPhone}\n<b>Baho:</b> ${starsText} (${n}/5)`);
+
+    await send(chat, "Xizmatingiz uchun rahmat! Agar xohlasangiz, izohingizni ham yozib qoldirishingiz mumkin:", {
+      reply_markup: {
+        keyboard: [[{ text: "🛍 Qaytadan buyurtma berish" }]],
+        resize_keyboard: true,
+        one_time_keyboard: false
+      }
+    });
     return;
   }
 
@@ -538,15 +595,17 @@ async function onCallback(cb) {
   await setPublic(id, status);
   await tg('answerCallbackQuery', { callback_query_id: cb.id, text: STATUS[status] });
   await tg('editMessageText', {
-    chat_id: cb.message.chat.id, message_id: cb.message.message_id,
-    text: orderText(o), parse_mode: 'HTML', reply_markup: keyboard(o),
+    chat_id: cb.message.chat.id,
+    message_id: cb.message.message_id,
+    text: orderText(o),
+    parse_mode: 'HTML',
+    reply_markup: keyboard(o),
   });
   if (o.chatId) send(o.chatId, B[lg(o.lang)].status(id, SL[lg(o.lang)][status])).catch(() => {});
   
   if (status === 'done' && o.chatId) {
     send(o.chatId, B[lg(o.lang)].rate, { reply_markup: { inline_keyboard: [[1, 2, 3, 4, 5].map((n) => ({ text: `${n}⭐`, callback_data: `rate:${id}:${n}` }))]} }).catch(() => {});
     
-    // Agar mijoz baholashni bosmasa ham, buyurtma 'done' bo'lganda pastda tugma chiqib turishi uchun
     await send(o.chatId, "Buyurtmangiz yetkazib berildi! Yana buyurtma bermoqchi bo'lsangiz pastdagi tugmani bosing 👇", {
       reply_markup: {
         keyboard: [[{ text: "🛍 Qaytadan buyurtma berish" }]],
