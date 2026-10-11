@@ -218,7 +218,6 @@ app.post('/api/order', async (req, res) => {
   }
 });
 
-// Saytdan yuborilgan baholarni qabul qiluvchi API
 app.post('/api/review', async (req, res) => {
   try {
     const { orderId, rating, comment } = req.body || {};
@@ -249,7 +248,7 @@ app.post('/api/review', async (req, res) => {
   }
 });
 
-// ---------- ADMIN API (Admin panel uchun) ----------
+// ---------- ADMIN API ----------
 const hmac = (s) => crypto.createHmac('sha256', TOKEN_SECRET).update(s).digest('hex');
 const same = (a, b) => a.length === b.length && crypto.timingSafeEqual(Buffer.from(a), Buffer.from(b));
 
@@ -266,7 +265,7 @@ app.post('/api/admin/login', (req, res) => {
   if (password !== ADMIN_PASSWORD) {
     return res.json({ status: 'error', message: "Parol noto'g'ri" });
   }
-  const exp = Date.now() + 86400000; // 1 kun
+  const exp = Date.now() + 86400000;
   const sig = hmac('admin.' + exp);
   res.json({ status: 'ok', token: `${exp}.${sig}` });
 });
@@ -385,19 +384,17 @@ async function onStart(m, orderId) {
   const chat = m.chat.id;
   botSessions[chat] = { cart: {}, orderId: orderId || null, step: 'choosing_lang' };
 
+  // 1. Avval eski klaviaturani butunlay tozalaymiz
+  await send(chat, "🔄 Yangi buyurtma jarayoni...", { reply_markup: { remove_keyboard: true } });
+
+  // 2. So'ngra til tanlash tugmalarini chiqaramiz
   const langMarkup = {
     inline_keyboard: [
       [{ text: "🇺🇿 O'zbekcha", callback_data: "lang:uz" }, { text: "🇷🇺 Русский", callback_data: "lang:ru" }],
       [{ text: "🇬🇧 English", callback_data: "lang:en" }, { text: "🇮🇳 हिन्दी", callback_data: "lang:hi" }]
     ]
   };
-
-  await send(chat, B.uz.chooseLang, { 
-    reply_markup: { 
-      ...langMarkup,
-      remove_keyboard: true 
-    } 
-  });
+  await send(chat, B.uz.chooseLang, { reply_markup: langMarkup });
 }
 
 async function askPhoneStep(chat) {
@@ -423,6 +420,9 @@ async function showCategories(chat) {
   session.step = 'categories';
   const T = B[session.lang];
 
+  // Oldingi tugmalarni tozalash
+  await send(chat, "⏳ Kategoriyalar yuklanmoqda...", { reply_markup: { remove_keyboard: true } });
+
   const itemsObj = Object.keys(LIVE).length ? LIVE : SEED.items;
   const categories = [...new Set(Object.values(itemsObj).map(i => i.category || 'Asosiy'))];
 
@@ -432,12 +432,7 @@ async function showCategories(chat) {
   }
   inlineKeyboard.push([{ text: "🛒 Savatchani ko'rish", callback_data: "view_cart" }]);
 
-  await send(chat, T.categoriesTitle, { 
-    reply_markup: { 
-      inline_keyboard: inlineKeyboard, 
-      remove_keyboard: true 
-    } 
-  });
+  await send(chat, T.categoriesTitle, { reply_markup: { inline_keyboard: inlineKeyboard } });
 }
 
 async function showCategoryItems(chat, categoryName) {
@@ -506,6 +501,9 @@ async function onMessage(m) {
     session.phone = phone;
     await db.ref('users/' + chat).set({ phone });
 
+    // Telefon yuborilgach klaviaturani olib tashlash
+    await send(chat, "✅ Telefon raqam qabul qilindi!", { reply_markup: { remove_keyboard: true } });
+
     if (session.orderId) {
       const o = (await db.ref('ordersPrivate/' + session.orderId).get()).val();
       if (o && o.status === 'unconfirmed') return confirmOrderFromWeb(o, chat, phone, m.from);
@@ -515,6 +513,9 @@ async function onMessage(m) {
 
   if (m.location && session.step === 'waiting_location') {
     session.location = { lat: m.location.latitude, lng: m.location.longitude };
+    
+    // Geolokatsiya qabul qilingach tugmani o'chirish
+    await send(chat, "📍 Manzil qabul qilindi!", { reply_markup: { remove_keyboard: true } });
     return showCategories(chat);
   }
 
