@@ -181,7 +181,9 @@ const app = express();
 app.set('trust proxy', 1);
 app.use(cors({ origin: FRONTEND_URL === '*' ? true : FRONTEND_URL }));
 app.use(express.json({ limit: '50kb' }));
-app.get('/', (_, res) => res.send('Garden Food API ishlayapti'));
+
+// UptimeRobot va brauzerlar uchun asosiy sahifa (502 xatosini oldini oladi)
+app.get('/', (_, res) => res.status(200).send('Garden Food API ishlayapti'));
 
 const rate = new Map();
 app.post('/api/order', async (req, res) => {
@@ -230,8 +232,6 @@ const adminAuth = (req, res, next) => {
 const wrap = (fn) => (req, res) => fn(req, res).catch((e) => { console.error(e); res.status(500).json({ status: 'error', message: 'Server xatosi' }); });
 const BAD = { status: 'error', message: "Ma'lumotlar noto'g'ri" };
 const okId = (id) => /^[A-Za-z0-9_-]{1,60}$/.test(id);
-
-app.listen(PORT, () => console.log('Server port', PORT));
 
 // ==========================================
 // ---------- TELEGRAM BOT (GIBRID) ---------
@@ -596,3 +596,8 @@ let offset = 0;
   }
   poll();
 })();
+
+// Serverni Render va UptimeRobot uchun to'g'ri port va '0.0.0.0' hostda ishga tushirish
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`GardenFood Backend serveri ${PORT}-portda muvaffaqiyatli ishga tushdi!`);
+});
