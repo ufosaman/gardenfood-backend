@@ -182,7 +182,6 @@ app.set('trust proxy', 1);
 app.use(cors({ origin: FRONTEND_URL === '*' ? true : FRONTEND_URL }));
 app.use(express.json({ limit: '50kb' }));
 
-// UptimeRobot va brauzerlar uchun asosiy sahifa (502 xatosini oldini oladi)
 app.get('/', (_, res) => res.status(200).send('Garden Food API ishlayapti'));
 
 const rate = new Map();
@@ -229,14 +228,11 @@ const adminAuth = (req, res, next) => {
   if (!exp || !sig || Number(exp) < Date.now() || !same(sig, hmac('admin.' + exp))) return res.status(401).json({ status: 'error', message: "Ruxsat yo'q" });
   next();
 };
-const wrap = (fn) => (req, res) => fn(req, res).catch((e) => { console.error(e); res.status(500).json({ status: 'error', message: 'Server xatosi' }); });
-const BAD = { status: 'error', message: "Ma'lumotlar noto'g'ri" };
-const okId = (id) => /^[A-Za-z0-9_-]{1,60}$/.test(id);
 
 // ==========================================
 // ---------- TELEGRAM BOT (GIBRID) ---------
 // ==========================================
-const botSessions = {}; // { chatId: { step, lang, phone, location, cart, orderId, pendingItemNote, orderNote } }
+const botSessions = {}; 
 
 async function confirmOrderFromWeb(o, chat, phone, from) {
   const upd = { status: 'pending', phone, chatId: chat, username: from.username || null, confirmedAt: Date.now() };
@@ -280,7 +276,6 @@ async function askLocationStep(chat) {
   });
 }
 
-// Kategoriyalarni chiqarish
 async function showCategories(chat) {
   const session = botSessions[chat];
   session.step = 'categories';
@@ -298,7 +293,6 @@ async function showCategories(chat) {
   await send(chat, T.categoriesTitle, { reply_markup: { inline_keyboard: inlineKeyboard, remove_keyboard: true } });
 }
 
-// Tanlangan kategoriya mahsulotlarini rasmlari va tarkibi bilan chiqarish
 async function showCategoryItems(chat, categoryName) {
   const session = botSessions[chat];
   session.step = 'category_items';
@@ -353,7 +347,8 @@ async function onMessage(m) {
   const session = botSessions[chat] || { lang: 'uz', cart: {} };
   const T = B[session.lang];
 
-  if (m.text?.startsWith('/start')) {
+  // /start yoki "🛍 Qaytadan buyurtma berish" tugmasi bosilganda boshidan boshlash
+  if (m.text?.startsWith('/start') || m.text === "🛍 Qaytadan buyurtma berish") {
     const parts = m.text.split(' ');
     const id = parts[1] ? parts[1].trim() : null;
     return onStart(m, id);
@@ -377,7 +372,6 @@ async function onMessage(m) {
     return showCategories(chat);
   }
 
-  // Har bir mahsulot uchun yozilgan izohni qabul qilish
   if (m.text && session.step === 'waiting_item_note') {
     const itemId = session.pendingItemNote;
     if (itemId) {
@@ -389,19 +383,25 @@ async function onMessage(m) {
     return showCategories(chat);
   }
 
-  // Buyurtma oxirida umumiy izohni qabul qilish
   if (m.text && session.step === 'waiting_order_note') {
     session.orderNote = m.text.trim().slice(0, 300);
     return finalizeOrderProcess(chat);
   }
 
-  // Baholashdan keyingi izoh
   if (m.text && !m.text.startsWith('/')) {
     const oid = (await db.ref('reviewPending/' + chat).get()).val();
-    const cl = oid ? await addComment(oid, m.text) : false;
-    if (cl) {
+    if (oid) {
+      const cl = await addComment(oid, m.text);
       await db.ref('reviewPending/' + chat).remove();
-      return send(chat, B[cl].commentOk);
+      botSessions[chat] = { lang: cl || 'uz', cart: {} };
+      await send(chat, B[cl || 'uz'].commentOk, {
+        reply_markup: {
+          keyboard: [[{ text: "🛍 Qaytadan buyurtma berish" }]],
+          resize_keyboard: true,
+          one_time_keyboard: false
+        }
+      });
+      return;
     }
   }
 }
@@ -504,7 +504,6 @@ async function onCallback(cb) {
     return finalizeOrderProcess(chat);
   }
 
-  // Admin va baholash qismi
   if (cb.data?.startsWith('rate:')) {
     const [, oid, n] = cb.data.split(':');
     const ord = (await db.ref('ordersPrivate/' + oid).get()).val();
@@ -514,6 +513,15 @@ async function onCallback(cb) {
     if (rv) {
       await db.ref('reviewPending/' + chat).set(oid);
       await tg('editMessageText', { chat_id: chat, message_id: cb.message.message_id, text: T.thanksRate(rv.rating) });
+      
+      // Baholangandan so'ng pastda "Qaytadan buyurtma berish" tugmasini chiqarish
+      await send(chat, "Xizmatingiz uchun rahmat!", {
+        reply_markup: {
+          keyboard: [[{ text: "🛍 Qaytadan buyurtma berish" }]],
+          resize_keyboard: true,
+          one_time_keyboard: false
+        }
+      });
     }
     return;
   }
@@ -534,8 +542,19 @@ async function onCallback(cb) {
     text: orderText(o), parse_mode: 'HTML', reply_markup: keyboard(o),
   });
   if (o.chatId) send(o.chatId, B[lg(o.lang)].status(id, SL[lg(o.lang)][status])).catch(() => {});
-  if (status === 'done' && o.chatId)
+  
+  if (status === 'done' && o.chatId) {
     send(o.chatId, B[lg(o.lang)].rate, { reply_markup: { inline_keyboard: [[1, 2, 3, 4, 5].map((n) => ({ text: `${n}⭐`, callback_data: `rate:${id}:${n}` }))]} }).catch(() => {});
+    
+    // Agar mijoz baholashni bosmasa ham, buyurtma 'done' bo'lganda pastda tugma chiqib turishi uchun
+    await send(o.chatId, "Buyurtmangiz yetkazib berildi! Yana buyurtma bermoqchi bo'lsangiz pastdagi tugmani bosing 👇", {
+      reply_markup: {
+        keyboard: [[{ text: "🛍 Qaytadan buyurtma berish" }]],
+        resize_keyboard: true,
+        one_time_keyboard: false
+      }
+    });
+  }
 }
 
 async function finalizeOrderProcess(chat) {
@@ -597,7 +616,6 @@ let offset = 0;
   poll();
 })();
 
-// Serverni Render va UptimeRobot uchun to'g'ri port va '0.0.0.0' hostda ishga tushirish
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`GardenFood Backend serveri ${PORT}-portda muvaffaqiyatli ishga tushdi!`);
 });
